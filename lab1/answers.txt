@@ -1,2 +1,17 @@
 Place the answers to required questions in this text file.
 
+1)
+the cmpl instruction compairs the value at the address 
+NR_syscalls with the syscall that is in eax, cmpl stores the result in 
+one of the bits in Condition Register Field BF.
+
+
+2)
+For all syscalls, the syscall number goes in %eax. 
+For syscalls that have less than six args, the args 
+go in %ebx,%ecx,%edx,%esi,%edi in order. 
+The return value of the syscall is stored in %eax.
+
+i am not sure what syscall you are talking about so I cant tell that each 
+register stores what
+

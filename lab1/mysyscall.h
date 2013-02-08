@@ -131,4 +131,9 @@
      rv;						     \
    })
 
+#define MY_GETPID()					\
+	({						\
+		MY_SYSCALL0(20);			\
+	})
+
 #endif // __MYSYSCALL_H__

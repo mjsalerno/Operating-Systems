@@ -24,6 +24,7 @@ int main() {
   // pid2 = MY_SYSCALL...(NUM);
 
   //pid2 = MY_SYSCALL0(20);
+
 	pid2 = MY_GETPID();
 	
   if (pid1 == pid2 && pid2 > 0)

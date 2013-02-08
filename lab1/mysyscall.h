@@ -131,9 +131,35 @@
      rv;						     \
    })
 
-#define MY_GETPID()					\
-	({						\
-		MY_SYSCALL0(20);			\
+#define MY_GETPID()							\
+	({								\
+		MY_SYSCALL0(20);					\
 	})
+
+#define MY_OFILE(fileName, flags, mode)					\
+	({								\
+		MY_SYSCALL3(5,fileName, flags, mode);			\
+	})
+
+#define MY_RFILE(fd, buff, count)					\
+	({								\
+		MY_SYSCALL3(3, fd, buff, count);			\
+	})
+
+#define MY_WFILE(fd, buff, count)					\
+	({								\
+		MY_SYSCALL3(4, fd, buff, count);			\
+	})
+
+#define MY_CFILE(fd)							\
+	({								\
+		MY_SYSCALL1(6, fd);					\
+	})
+
+#define MY_PRINT(string, size)							\
+	({								\
+		MY_SYSCALL3(4,1,string,size);						\
+	})
+
 
 #endif // __MYSYSCALL_H__

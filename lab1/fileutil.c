@@ -1,5 +1,5 @@
 #include "mysyscall.h"
-#include <stdio.h>
+//#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -21,90 +21,17 @@ asm ("util_start:\r\n"
      "pushl (%eax)\r\n"
      "  call main\r\n");
 
-int contains(char c, char *str){
-	char* temp;
-	for(temp = str; *temp != '\0'; temp++){
-		if(*temp == c) return 1;
-	}
-	return 0;
-}
-
-int countNL(char *buffer){
-	int nlCount = 0;
-	char *cp = buffer;
-	while(*cp != '\0'){
-		if(*cp == '\n') nlCount++;
-			cp++;
-		}
-		return nlCount;
-}
-
-int findNull(char *buffer){
-	char *cp;
-	int i = 0;
-	for(cp = buffer; *cp != '\0'; cp++){
-		i++;
-	}
-	return i;
-}
-
-void intToStr(char* str, int j){
-	char *cp = str;
-	int temp = 0;
-	int i = 0;
-	
-	if(j == 0){
-		str[0] = '0';
-		str[1] = '\0';
-	}
-	
-	for(i = 0; j > 0; i++){
-		*cp = (j % 10) + '0';
-		cp++;
-		j /= 10;
-	}	
-	i--;
-	
-	while((i - j) > 0){
-		str[i] ^= str[j];
-		str[j] ^= str[i];
-		str[i--] ^= str[j++];
-	}
-}
-
-void copyBuff(char *buff1, char *buff2, int len){
-	len--;
-	for(len; len >= 0; len--){
-		*buff2 = *buff1;
-		buff2++;
-		buff1++;
-	}
-}
-
-int isDosStyle(char *buffer){
-	return *(buffer + newlineDist(buffer) + 1) == '\r'; 
-}
-
-int newlineDist(char *cp){
-	int count = 0;
-	while(*cp != '\n' && *cp != '\r' && *cp != '\0'){
-		cp++;
-		count++;
-	}
-	return count;
-}
-
-void reverseStr(char *str, int len){
-	int at = 0;
-	while((len - at) > 0){
-		str[len] ^= str[at];
-		str[at] ^= str[len];
-		str[len--] ^= str[at++];
-	}
-}
-
-void printline(char *string);
+int findNull(char *buffer);
+void reverseStr(char *str, int len);
+int newlineDist(char *cp);
+int isDosStyle(char *buffer);
+void copyBuff(char *buff1, char *buff2, int len);
+void intToStr(char* str, int j);
+int countNL(char *buffer);
+int contains(char c, char *str);
 int stringlength(char *string);
+void printline(char *string);
+
 
 int main(int argc, char **argv) {
   int return_code = argc;
@@ -172,8 +99,6 @@ int main(int argc, char **argv) {
 	char *cp1 = buffer;
 	char *cp2 = buffer2;	
 	
-	int i = 0;
-	
 	while(*cp1 != '\0'){
 		if(*cp1 == '\n'){
 			*cp2 = '\r';
@@ -200,8 +125,6 @@ int main(int argc, char **argv) {
 	char buffer2[1024] = {'\0'};
 	char *cp1 = buffer;
 	char *cp2 = buffer2;	
-	
-	int i = 0;
 	
 	while(*cp1 != '\0'){
 		if(*cp1 == '\r' && *(cp1 + 1) == '\n'){
@@ -276,4 +199,85 @@ int stringlength(char *string){
 	}
 	
 	return i;
+}
+
+int contains(char c, char *str){
+	char* temp;
+	for(temp = str; *temp != '\0'; temp++){
+		if(*temp == c) return 1;
+	}
+	return 0;
+}
+
+int countNL(char *buffer){
+	int nlCount = 0;
+	char *cp = buffer;
+	while(*cp != '\0'){
+		if(*cp == '\n') nlCount++;
+			cp++;
+		}
+		return nlCount;
+}
+
+int findNull(char *buffer){
+	char *cp;
+	int i = 0;
+	for(cp = buffer; *cp != '\0'; cp++){
+		i++;
+	}
+	return i;
+}
+
+void intToStr(char* str, int j){
+	char *cp = str;
+	int i = 0;
+	
+	if(j == 0){
+		str[0] = '0';
+		str[1] = '\0';
+	}
+	
+	for(i = 0; j > 0; i++){
+		*cp = (j % 10) + '0';
+		cp++;
+		j /= 10;
+	}	
+	i--;
+	
+	while((i - j) > 0){
+		str[i] ^= str[j];
+		str[j] ^= str[i];
+		str[i--] ^= str[j++];
+	}
+}
+
+void copyBuff(char *buff1, char *buff2, int len){
+	len--;
+	for(; len >= 0; len--){
+		*buff2 = *buff1;
+		buff2++;
+		buff1++;
+	}
+}
+
+int isDosStyle(char *buffer){
+	return *(buffer + newlineDist(buffer) + 1) == '\r'; 
+}
+
+int newlineDist(char *cp){
+	int count = 0;
+	while(*cp != '\n' && *cp != '\r' && *cp != '\0'){
+		cp++;
+		count++;
+	}
+	return count;
+}
+
+void reverseStr(char *str, int len){
+	int at = 0;
+	while((len - at) > 0){
+		str[len] ^= str[at];
+		str[at] ^= str[len];
+		str[len--] ^= str[at++];
+	}
 }

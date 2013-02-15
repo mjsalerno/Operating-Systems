@@ -1,0 +1,6 @@
+CSE 306 is fun.
+
+I like to convert Unix newlines to DOS newlines.
+
+And then back again!
+

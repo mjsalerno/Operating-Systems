@@ -126,7 +126,7 @@
 	"int $0x80;"                          		\
 	"movl %%eax, %0;"                     		\
 	:"=a"(rv)                             		\
-	:"a"(NUM), "r"(ARG1), "r"(ARG2), "r"(ARG3), "r"(ARG4), "r"(ARG5), "r"(ARG6)\
+	:"a"(NUM), "rm"(ARG1), "rm"(ARG2), "rm"(ARG3), "rm"(ARG4), "rm"(ARG5), "rm"(ARG6)\
 	:"%ebx");						\
      rv;						     \
    })

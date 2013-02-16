@@ -3,3 +3,17 @@ file should describe what you did, what approach you took, results of any
 measurements you made, which files are included in your submission and what
 they are for, etc.  Feel free to include any other information you think is
 helpful to us in this README; it can only help your grade.
+
+files:
+fileutil.c - source for EX 6
+test-input-dos.txt - test file with dos style new lines in it
+test-input-unix.txt - test file with unix style new lines in it
+
+implementation:
+
+reverse-used a pointer that pointed at the end of my file buffer. Went backwords and found /n so i could split the lines and hand more pointers point to them. once evers start of a line had a pointer I wrote all of the lines into a buffer then over wrote the file buffer
+
+new line coverter - for DOS, I seeked a pointer intil i found a /r/n and replaced it in a different buffer with just a /n. if there was no dos new line then i just wrote the character in to the new buffer. same method for unix->dos.
+
+count newlines- seek a pointer though the file and every time I see a /n i add one to a counter 
+

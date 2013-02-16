@@ -160,6 +160,11 @@
 	({								\
 		MY_SYSCALL3(4,1,string,size);						\
 	})
+	
+#define MY_EXIT(val)							\
+	({								\
+		MY_SYSCALL1(1,val);						\
+	})
 
 
 #endif // __MYSYSCALL_H__

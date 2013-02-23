@@ -40,7 +40,7 @@ main (int argc, char ** argv, char **envp) {
       rv = read(0, cursor, 1);
       last_char = *cursor;
     } 
-    *cursor = '\0';
+    *(cursor-1) = '\0';
 
     if (!rv) { 
       finished = 1;

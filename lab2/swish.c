@@ -7,8 +7,7 @@
 // Assume no input line will be longer than 1024 bytes
 #define MAX_INPUT 1024
 
-int 
-main (int argc, char ** argv, char **envp) {
+int main (int argc, char ** argv, char **envp) {
 
   int finished = 0;
   char *prompt = "swish> ";
@@ -30,13 +29,7 @@ main (int argc, char ** argv, char **envp) {
     }
     
     // read and parse the input
-    for(rv = 1, count = 0, 
-	  cursor = cmd, last_char = 1;
-	rv 
-	  && (++count < (MAX_INPUT-1))
-	  && (last_char != '\n');
-	cursor++) { 
-
+    for(rv = 1, count = 0, cursor = cmd, last_char = 1; rv && (++count < (MAX_INPUT-1)) && (last_char != '\n'); cursor++) { 
       rv = read(0, cursor, 1);
       last_char = *cursor;
     } 

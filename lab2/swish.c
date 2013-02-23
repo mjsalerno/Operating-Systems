@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "shellhelper.h"
 
 // Assume no input line will be longer than 1024 bytes
 #define MAX_INPUT 1024
@@ -39,12 +40,9 @@ int main (int argc, char ** argv, char **envp) {
       finished = 1;
       break;
     }
-
-
     // Execute the command, handling built-in commands separately 
     // Just echo the command line for now
     write(1, cmd, strnlen(cmd, MAX_INPUT));
-
   }
 
   return 0;

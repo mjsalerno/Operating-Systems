@@ -20,7 +20,6 @@ char* parseEnv(char **envp, char *keyword){
 	if(envp+i == '\0')
 		return NULL;
 	else{
-		// USE i AND return char pointer from envp
 		return strstr(at, "=")+1;
 	}
 	

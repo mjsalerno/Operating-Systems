@@ -18,12 +18,17 @@ int main (int argc, char ** argv, char **envp) {
   char cmd[MAX_INPUT];
   char *arguments[MAX_ARGS];
   
+  setbuf(stdout, NULL);
+
   while (!finished) {
     char *cursor;
     char last_char;
     int rv;
     int count;
-    
+
+    char *a[] = {"pwd", NULL};    
+    spawn(a);
+    printf("\b");
     rv = write(1, prompt, strlen(prompt));
     if (!rv) { 
       finished = 1;
@@ -42,15 +47,17 @@ int main (int argc, char ** argv, char **envp) {
       finished = 1;
       break;
     }
-    
-    parseCommand(cmd, arguments, MAX_ARGS);
-    if(!strcmp(arguments[0], "exit")){
-      finished = TRUE;      
-    }else if(!strcmp(arguments[0], "cd")){
-      int val = chdir(arguments[1]);
-      if(val) printf("Sorry but %s does not exist\n", arguments[1]);
-    }else{
-      spawn(arguments);
+    if(strlen(cmd)){
+      parseCommand(cmd, arguments, MAX_ARGS);
+      if(!strcmp(arguments[0], "exit")){
+        finished = TRUE;      
+      }else if(!strcmp(arguments[0], "cd")){
+        int val = chdir(arguments[1]);
+        if(val) printf("Sorry but %s does not exist\n", arguments[1]);
+        //STILL NEEDS ~ AND - IMPLEMENTATION
+      }else{
+        spawn(arguments);
+      }
     }       
     // Execute the command, handling built-in commands separately 
     // Just echo the command line for now

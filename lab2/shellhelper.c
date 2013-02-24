@@ -33,12 +33,12 @@ void spawn(char **args){
   int status;
   // Attempt to fork
   if((pid = fork()) < 0){
-    fprintf(stderr, "Unable to fork child process.\n");
+    printError("Unable to fork child process.\n");
   }
   // If the fork was successful attempt to execute the program.   
   else if(pid == 0){
     if(execvp(args[0], args) < 0){
-      fprintf(stderr, "An error occured while trying to start '%s'\n", args[0]);
+      fprintf(stderr, "\033[0;31mAn error occured while trying to start '%s'\033[0m\n", args[0]);
       exit(1);
     }
   }else{
@@ -56,7 +56,7 @@ void parseCommand(char *command, char** parsed, int size){
       parsed[i++] = token;
       token = strtok(NULL, " "); 
     }else{
-      fprintf(stderr, "Too Many Arguments provided.\n");
+      printError("Too Many Arguments provided.\n");
     }
   }
   // Append the NULL as the last argument in the array
@@ -75,5 +75,9 @@ char** argsBuilder(char *filename, int num, ...){
   // Clean up the list  
   va_end(arguments);
   return NULL;  
+}
+
+void printError(char *msg){
+  fprintf(stderr, "\033[0;31m%s\033[0m", msg);
 }
 

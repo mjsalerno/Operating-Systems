@@ -26,16 +26,26 @@ char* parseEnv(char **envp, char *keyword){
 	
 }
 
-int spawn(char *program, char **args){
+/**
+ * Since the name of the program is always in args[0], use args[0] to execute the program.
+ */
+int spawn(char **args){
   pid_t pid;
-  pid = fork();
-  if(pid != 0)
-    return pid;
+  int status;
+  // Attempt to fork
+  if((pid = fork()) < 0){
+    fprintf(stderr, "Unable to fork child process.\n");
+  }
+  // If the fork was successful attempt to execute the program.   
+  else if(pid == 0){
+    if(execvp(args[0], args) < 0){
+      fprintf(stderr, "An error occured while trying to start '%s'\n", args[0]);
+      abort();
+    }
+  }
   else{
-    execvp(program, args);
-    // If something went wrong while trying to execute the program, print out an error and call abort.
-    fprintf(stderr, "An error occured while trying to start '%s'\n", program);
-    abort();
+    // Wait for the child process to finish
+    while(wait(&status) != pid) ;
   }
 }
 
@@ -46,9 +56,10 @@ char** argsBuilder(char *filename, int num, ...){
   va_start(arguments, num);
   // Loop through the arguments
   for(i = 0; i < num; i++){
-    printf("Arg: %s", va_arg(arguments, char*));
+    printf("Arg: %s\n", va_arg(arguments, char*));
   }  
   // Clean up the list  
-  va_end(arguments);  
+  va_end(arguments);
+  return NULL;  
 }
 

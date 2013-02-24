@@ -14,13 +14,13 @@ int main (int argc, char ** argv, char **envp) {
   char *prompt = "swish> ";
   char cmd[MAX_INPUT];
 
-
+  //argsBuilder("test", 3, "Hello", "World!", "Bye!");
+    
   while (!finished) {
     char *cursor;
     char last_char;
     int rv;
     int count;
-
 
     // Print the prompt
     rv = write(1, prompt, strlen(prompt));

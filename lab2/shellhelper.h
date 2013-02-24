@@ -9,12 +9,11 @@
 char* parseEnv(char **envp, char *keyword);
 
 /**
- * Performs fork & exec using the program, and arguments provided.
- * @param program char array containing the name of the binary to be executed.
+ * Performs fork & exec using the arguments provided.
  * @param args NULL terminated array of char* that contains the argument(s) to the binary.
  * @return Returns the pid of the child that is spawned.
  */
-int spawn(char *program, char **args);
+int spawn(char **args);
 
 /**
  * Creates an array of char* that is NULL terminated. Helper function for use of execvp.

@@ -13,7 +13,7 @@ int spawn(char *program, char **args){
     return pid;
   else{
     execvp(program, args);
-    // If something went wrong while trying to execute to program print out an error and quit.
+    // If something went wrong while trying to execute the program, print out an error and call abort.
     fprintf(stderr, "An error occured while trying to start '%s'\n", program);
     abort();
   }

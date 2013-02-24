@@ -15,6 +15,12 @@ char* parseEnv(char **envp, char *keyword);
 void spawn(char **args);
 
 /**
+ * Parses a string a puts the results in the parsed array.
+ */
+void parseCommand(char *command, char** parsed, int size);
+
+/**
+ * ### EXPERIMENTAL ###
  * Creates an array of char* that is NULL terminated. Helper function for use of execvp.
  * @param filename char array containing the name of the binary to be executed.
  * @param num int containing the number of variable arguments to be provided.

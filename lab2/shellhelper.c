@@ -50,6 +50,23 @@ void spawn(char **args){
   }
 }
 
+void parseCommand(char *command, char** parsed, int size){
+  int i = 0;
+  char *token;
+  token = strtok(command, " ");
+  while(token){
+    if(i < size - 1){
+      parsed[i++] = token;
+      token = strtok(NULL, " "); 
+    }
+    else{
+      fprintf(stderr, "Too Many Arguments provided.\n");
+    }
+  }
+  // Append the NULL as the last argument in the array
+  parsed[i] = NULL;
+}
+
 char** argsBuilder(char *filename, int num, ...){
   va_list arguments;
   int i;

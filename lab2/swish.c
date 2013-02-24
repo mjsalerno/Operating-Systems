@@ -7,22 +7,23 @@
 
 // Assume no input line will be longer than 1024 bytes
 #define MAX_INPUT 1024
+#define MAX_ARGS  1024
+#define TRUE  1
+#define FALSE 0
 
 int main (int argc, char ** argv, char **envp) {
 
   int finished = 0;
   char *prompt = "swish> ";
   char cmd[MAX_INPUT];
-
-  //argsBuilder("test", 3, "Hello", "World!", "Bye!");
-    
+  char *arguments[MAX_ARGS];
+  
   while (!finished) {
     char *cursor;
     char last_char;
     int rv;
     int count;
-    char *test[] = {"lq", NULL};
-
+    
     // Print the prompt
     rv = write(1, prompt, strlen(prompt));
     if (!rv) { 
@@ -42,9 +43,15 @@ int main (int argc, char ** argv, char **envp) {
       break;
     }
     
+    parseCommand(cmd, arguments, MAX_ARGS);
+    if(!strcmp(arguments[0], "exit")){
+      finished = TRUE;      
+    }else{
+      spawn(arguments);
+    }       
     // Execute the command, handling built-in commands separately 
     // Just echo the command line for now
-    //write(1, cmd, strnlen(cmd, MAX_INPUT));
+    // write(1, cmd, strnlen(cmd, MAX_INPUT));
   }
 
   return 0;

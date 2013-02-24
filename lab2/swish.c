@@ -8,6 +8,7 @@
 // Assume no input line will be longer than 1024 bytes
 #define MAX_INPUT 1024
 #define MAX_ARGS  1024
+#define MAX_PATH  2048
 #define TRUE  1
 #define FALSE 0
 
@@ -17,7 +18,6 @@ int main (int argc, char ** argv, char **envp) {
   char *prompt = "\033[0;32mswish>\033[0m ";
   char cmd[MAX_INPUT];
   char *arguments[MAX_ARGS];
-  
   setbuf(stdout, NULL);
 
   while (!finished) {
@@ -25,10 +25,10 @@ int main (int argc, char ** argv, char **envp) {
     char last_char;
     int rv;
     int count;
+    char wd[MAX_PATH];
 
-    char *a[] = {"pwd", NULL};    
-    spawn(a);
-    printf("\b");
+    getcwd(wd, MAX_PATH);  
+    printf("%s[%s]%s ", BLUE, wd, NONE);
     rv = write(1, prompt, strlen(prompt));
     if (!rv) { 
       finished = 1;

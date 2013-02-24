@@ -1,10 +1,11 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
 /* Cheat Sheet for printing out colors, and special things in the terminal */
+/* 0 -> Normal, 1 -> Bold, 4 -> underline, 9 -> Strike */
 #define RED       "\033[0;31m"        /* 0 -> normal ;  31 -> red */
-#define CYAN      "\033[1;36m"        /* 1 -> bold ;  36 -> cyan */
-#define GREEN     "\033[4;32m"        /* 4 -> underline ;  32 -> green */
-#define BLUE      "\033[9;34m"        /* 9 -> strike ;  34 -> blue */
+#define CYAN      "\033[0;36m"        /* 1 -> bold ;  36 -> cyan */
+#define GREEN     "\033[0;32m"        /* 4 -> underline ;  32 -> green */
+#define BLUE      "\033[0;34m"        /* 9 -> strike ;  34 -> blue */
 #define BLACK     "\033[0;30m"
 #define BROWN     "\033[0;33m"
 #define MAGENTA   "\033[0;35m"

@@ -1,9 +1,27 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include "shellhelper.h"
+#include <string.h>
+#include <stdio.h>
 
 char* parseEnv(char **envp, char *keyword){
-  return NULL;
+  char *cp, *at;
+  int i;
+  
+  for(at = *envp, i = 0; envp+i != NULL; at = (*(envp)+i), i++){
+	  cp = strstr(at, keyword);
+	  
+	  if(cp != NULL)
+		break;  
+	}
+	
+	if(envp+i == '\0')
+		return NULL;
+	else{
+		// USE i AND return char pointer from envp
+		return strstr(at, "=")+1;
+	}
+	
 }
 
 int spawn(char *program, char **args){

@@ -14,7 +14,7 @@
 int main (int argc, char ** argv, char **envp) {
 
   int finished = 0;
-  char *prompt = "swish> ";
+  char *prompt = "\033[0;32mswish>\033[0m ";
   char cmd[MAX_INPUT];
   char *arguments[MAX_ARGS];
   
@@ -24,7 +24,6 @@ int main (int argc, char ** argv, char **envp) {
     int rv;
     int count;
     
-    // Print the prompt
     rv = write(1, prompt, strlen(prompt));
     if (!rv) { 
       finished = 1;

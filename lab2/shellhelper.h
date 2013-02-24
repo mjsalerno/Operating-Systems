@@ -1,6 +1,6 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
-
+/* Cheat Sheet for printing out colors, and special things in the terminal */
 #define RED       "\033[0;31m"        /* 0 -> normal ;  31 -> red */
 #define CYAN      "\033[1;36m"        /* 1 -> bold ;  36 -> cyan */
 #define GREEN     "\033[4;32m"        /* 4 -> underline ;  32 -> green */
@@ -38,4 +38,10 @@ void parseCommand(char *command, char** parsed, int size);
  * @return Returns a NULL terminated char array of char* that contains the arguments to be passed to a binary. 
  */
 char** argsBuilder(char *filename, int num, ...);
+
+/**
+ * Prints a red message on stderr.
+ * @param msg char array containing the message to print.
+ */
+void printError(char *msg);
 #endif

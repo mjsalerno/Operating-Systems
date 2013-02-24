@@ -15,4 +15,12 @@ char* parseEnv(char **envp, char *keyword);
  * @return Returns the pid of the child that is spawned.
  */
 int spawn(char *program, char **args);
+
+/**
+ * Creates an array of char* that is NULL terminated. Helper function for use of execvp.
+ * @param filename char array containing the name of the binary to be executed.
+ * @param num int containing the number of variable arguments to be provided.
+ * @return Returns a NULL terminated char array of char* that contains the arguments to be passed to a binary. 
+ */
+char** argsBuilder(char *filename, int num, ...);
 #endif

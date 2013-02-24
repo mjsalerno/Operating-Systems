@@ -1,8 +1,10 @@
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include "shellhelper.h"
-#include <string.h>
-#include <stdio.h>
 
 char* parseEnv(char **envp, char *keyword){
   char *cp, *at;
@@ -35,5 +37,18 @@ int spawn(char *program, char **args){
     fprintf(stderr, "An error occured while trying to start '%s'\n", program);
     abort();
   }
+}
+
+char** argsBuilder(char *filename, int num, ...){
+  va_list arguments;
+  int i;
+  // Build the list of args  
+  va_start(arguments, num);
+  // Loop through the arguments
+  for(i = 0; i < num; i++){
+    printf("Arg: %s", va_arg(arguments, char*));
+  }  
+  // Clean up the list  
+  va_end(arguments);  
 }
 

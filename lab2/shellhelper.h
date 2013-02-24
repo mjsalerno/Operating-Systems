@@ -1,5 +1,16 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
+
+#define RED       "\033[0;31m"        /* 0 -> normal ;  31 -> red */
+#define CYAN      "\033[1;36m"        /* 1 -> bold ;  36 -> cyan */
+#define GREEN     "\033[4;32m"        /* 4 -> underline ;  32 -> green */
+#define BLUE      "\033[9;34m"        /* 9 -> strike ;  34 -> blue */
+#define BLACK     "\033[0;30m"
+#define BROWN     "\033[0;33m"
+#define MAGENTA   "\033[0;35m"
+#define GRAY      "\033[0;37m"
+#define NONE      "\033[0m"           /* to flush the previous property */
+
 /**
  * Searchs the array containing the enviroment variables and looks for the provided keyword.
  * @param envp NULL terminated array of char* that contains all the enviroment variables.

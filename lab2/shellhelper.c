@@ -12,8 +12,7 @@ char* parseEnv(char **envp, char *keyword){
   int i;
   
   for(at = *envp, i = 0; envp+i != NULL; at = (*(envp)+i), i++){
-	  cp = strstr(at, keyword);
-	  
+	  cp = strstr(at, keyword);  
 	  if(cp != NULL)
 		break;  
 	}
@@ -43,8 +42,7 @@ void spawn(char **args){
       fprintf(stderr, "An error occured while trying to start '%s'\n", args[0]);
       exit(1);
     }
-  }
-  else{
+  }else{
     // Wait for the child process to finish
     while(wait(&status) != pid) ;
   }
@@ -58,8 +56,7 @@ void parseCommand(char *command, char** parsed, int size){
     if(i < size - 1){
       parsed[i++] = token;
       token = strtok(NULL, " "); 
-    }
-    else{
+    }else{
       fprintf(stderr, "Too Many Arguments provided.\n");
     }
   }

@@ -21,6 +21,7 @@ int main (int argc, char ** argv, char **envp) {
     char last_char;
     int rv;
     int count;
+    char *test[] = {"lq", NULL};
 
     // Print the prompt
     rv = write(1, prompt, strlen(prompt));
@@ -40,9 +41,10 @@ int main (int argc, char ** argv, char **envp) {
       finished = 1;
       break;
     }
+    
     // Execute the command, handling built-in commands separately 
     // Just echo the command line for now
-    write(1, cmd, strnlen(cmd, MAX_INPUT));
+    //write(1, cmd, strnlen(cmd, MAX_INPUT));
   }
 
   return 0;

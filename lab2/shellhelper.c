@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include "shellhelper.h"
 
 char* parseEnv(char **envp, char *keyword){
@@ -29,7 +30,7 @@ char* parseEnv(char **envp, char *keyword){
 /**
  * Since the name of the program is always in args[0], use args[0] to execute the program.
  */
-int spawn(char **args){
+void spawn(char **args){
   pid_t pid;
   int status;
   // Attempt to fork
@@ -40,7 +41,7 @@ int spawn(char **args){
   else if(pid == 0){
     if(execvp(args[0], args) < 0){
       fprintf(stderr, "An error occured while trying to start '%s'\n", args[0]);
-      abort();
+      exit(1);
     }
   }
   else{

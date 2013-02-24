@@ -30,6 +30,7 @@ int main (int argc, char ** argv, char **envp) {
       finished = 1;
       break;
     }
+
     
     // read and parse the input
     for(rv = 1, count = 0, cursor = cmd, last_char = 1; rv && (++count < (MAX_INPUT-1)) && (last_char != '\n'); cursor++) { 
@@ -46,6 +47,9 @@ int main (int argc, char ** argv, char **envp) {
     parseCommand(cmd, arguments, MAX_ARGS);
     if(!strcmp(arguments[0], "exit")){
       finished = TRUE;      
+    }else if(!strcmp(arguments[0], "cd")){
+      int val = chdir(arguments[1]);
+      if(val) printf("Sorry but %s does not exist\n", arguments[1]);
     }else{
       spawn(arguments);
     }       

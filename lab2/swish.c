@@ -15,9 +15,17 @@ int main (int argc, char ** argv, char **envp) {
 
   bool finished = false;
   char *prompt = "\033[0;32mswish>\033[0m ";
+  int debug = 0;
   char cmd[MAX_INPUT];
   char *arguments[MAX_ARGS];
   setbuf(stdout, NULL);
+
+  if(argc){
+    if(!strcmp("-d", argv[1])){
+      debug = 1;
+      printf("debugging on.\n");
+    }
+  }
 
   while (!finished) {
     char wd[MAX_PATH];
@@ -30,11 +38,13 @@ int main (int argc, char ** argv, char **envp) {
     
     // Evaluate the command
     if(strlen(cmd)){
+      if(debug)printf("RUNNING:%s\n", cmd);
       parseCommand(cmd, arguments, MAX_ARGS);
       if(!strcmp(arguments[0], "exit")){
         finished = true;      
       }else if(!strcmp(arguments[0], "cd")){
         if(!strcmp(arguments[1], "-")){
+          //putenv("OLDPWD=/");
           chdir(parseEnv(envp, "OLDPWD"));
         }else if(!strcmp(arguments[1], "~")){
           chdir(parseEnv(envp, "HOME"));
@@ -46,6 +56,7 @@ int main (int argc, char ** argv, char **envp) {
       }else{
         spawn(arguments);
       }
+      if(debug)printf("ENDED: %s (needs return val)\n", cmd);
     }       
   }
 

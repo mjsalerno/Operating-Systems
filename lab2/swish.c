@@ -25,7 +25,8 @@ int main (int argc, char ** argv, char **envp) {
     // Print out the prompt
     getcwd(wd, MAX_PATH);  
     printf("%s[%s]%s %s ", BLUE, wd, NONE, prompt);
-    gets(cmd);
+    fgets(cmd, MAX_INPUT, stdin);
+    strtok(cmd, "\n"); // Thread safe?
     
     // Evaluate the command
     if(strlen(cmd)){

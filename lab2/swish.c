@@ -20,7 +20,7 @@ int main (int argc, char ** argv, char **envp) {
   char *arguments[MAX_ARGS];
   setbuf(stdout, NULL);
 
-  if(argc){
+  if(argc > 1){
     if(!strcmp("-d", argv[1])){
       debug = 1;
       printf("debugging on.\n");

@@ -34,9 +34,15 @@ int main (int argc, char ** argv, char **envp) {
       if(!strcmp(arguments[0], "exit")){
         finished = true;      
       }else if(!strcmp(arguments[0], "cd")){
+        if(!strcmp(arguments[1], "-")){
+          chdir(parseEnv(envp, "OLDPWD"));
+        }else if(!strcmp(arguments[1], "~")){
+          chdir(parseEnv(envp, "HOME"));
+        }else{
         int val = chdir(arguments[1]);
         if(val) printf("Sorry but %s does not exist\n", arguments[1]);
-        //STILL NEEDS ~ AND - IMPLEMENTATION
+        //STILL NEEDS - IMPLEMENTATION
+        }
       }else{
         spawn(arguments);
       }

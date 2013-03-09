@@ -25,6 +25,14 @@ char* parseEnv(char **envp, char *keyword){
 	
 }
 
+int contains(char *array[], char *key, int size){
+  for(int i = 0; i < size; i++){
+    if(strcmp(array[i], key) == 0)
+      return i;
+  }
+  return 0;
+}
+
 /**
  * Since the name of the program is always in args[0], use args[0] to execute the program.
  */

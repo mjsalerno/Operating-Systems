@@ -12,6 +12,8 @@
 #define MAX_ARGS  1024
 #define MAX_PATH  2048
 
+int setenv(const char *name, const char *value, int overwrite);
+
 int main(int argc, char ** argv, char **envp) {
 
     bool finished = false;
@@ -20,8 +22,7 @@ int main(int argc, char ** argv, char **envp) {
     char cmd[MAX_INPUT];
     char *arguments[MAX_ARGS];
     setbuf(stdout, NULL);
-    char tmpStr1[MAX_PATH] = {'\0'};
-    char tmpStr2[MAX_PATH] = {'\0'};
+    char wd[MAX_PATH];
 
     if (argc > 1) {
         if (!strcmp("-d", argv[1])) {
@@ -30,8 +31,7 @@ int main(int argc, char ** argv, char **envp) {
         }
     }
 
-    while (!finished) {
-        char wd[MAX_PATH];
+    while (!finished) {        
 
         // Print out the prompt
         getcwd(wd, MAX_PATH);
@@ -46,13 +46,9 @@ int main(int argc, char ** argv, char **envp) {
             if (!strcmp(arguments[0], "exit")) {
                 finished = true;
             } else if (!strcmp(arguments[0], "cd")) {
-                strcpy(tmpStr1, "OLDPWD=");
-                getcwd(tmpStr2, MAX_PATH);
-                strcat(tmpStr1, tmpStr2);
-                printf("tmpStr: %s\n", tmpStr1);
-                putenv(tmpStr1);
+                setenv("OLDPWD", wd, 1);
+                printf("oldpwd: %s\n", getenv("OLDPWD"));
                 if (!strcmp(arguments[1], "-")) {
-                    //putenv("OLDPWD=/");
                     chdir(getenv("OLDPWD"));
                 } else if (!strcmp(arguments[1], "~")) {
                     chdir(parseEnv(envp, "HOME"));

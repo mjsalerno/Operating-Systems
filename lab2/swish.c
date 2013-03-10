@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "shellhelper.h"
 
 // Assume no input line will be longer than 1024 bytes
@@ -19,6 +20,8 @@ int main (int argc, char ** argv, char **envp) {
   char cmd[MAX_INPUT];
   char *arguments[MAX_ARGS];
   setbuf(stdout, NULL);
+  char tmpStr1[MAX_PATH] = {'\0'};
+  char tmpStr2[MAX_PATH] = {'\0'};
 
   if(argc > 1){
     if(!strcmp("-d", argv[1])){
@@ -43,9 +46,14 @@ int main (int argc, char ** argv, char **envp) {
       if(!strcmp(arguments[0], "exit")){
         finished = true;      
       }else if(!strcmp(arguments[0], "cd")){
+        strcpy(tmpStr1, "OLDPWD=");
+        getcwd(tmpStr2, MAX_PATH);
+        strcat(tmpStr1, tmpStr2);
+        printf("tmpStr: %s\n", tmpStr1);
+        putenv(tmpStr1);
         if(!strcmp(arguments[1], "-")){
           //putenv("OLDPWD=/");
-          chdir(parseEnv(envp, "OLDPWD"));
+          chdir(getenv("OLDPWD"));
         }else if(!strcmp(arguments[1], "~")){
           chdir(parseEnv(envp, "HOME"));
         }else{

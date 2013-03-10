@@ -23,6 +23,7 @@ int main(int argc, char ** argv, char **envp) {
     char *arguments[MAX_ARGS];
     setbuf(stdout, NULL);
     char wd[MAX_PATH];
+    //char token[MAX_PATH] = {'\0'};
 
     if (argc > 1) {
         if (!strcmp("-d", argv[1])) {
@@ -43,6 +44,7 @@ int main(int argc, char ** argv, char **envp) {
         if (strlen(cmd)) {
             if (debug)printf("RUNNING:%s\n", cmd);
             parseCommand(cmd, arguments, MAX_ARGS);
+            if (debug)printf("RUNNING after parse:%s\n", cmd);
 
             if (!strcmp(arguments[0], "exit")) {
                 finished = true;
@@ -61,8 +63,21 @@ int main(int argc, char ** argv, char **envp) {
                     if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
                     int val = chdir(arguments[1]);
                     if (val) printf("Sorry but %s does not exist\n", arguments[1]);
-                    
+
                 }
+            } else if (!strcmp(arguments[0], "set")) {
+                setenv(arguments[1], arguments[3], 1);
+                printf("envset: %s\n", getenv(arguments[1]));
+
+            } else if (!strcmp(arguments[0], "echo")) {   //TODO: get this working for $ not in the first arg
+                char *cp = strchr(arguments[1], '$');
+                if (cp != NULL) {
+                  cp++;
+                  printf("%s = %s\n", cp, getenv(cp));
+                }else {
+                  spawn(arguments);  
+                }
+
             } else {
                 spawn(arguments);
             }

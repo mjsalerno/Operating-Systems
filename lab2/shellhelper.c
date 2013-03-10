@@ -58,6 +58,9 @@ void spawn(char **args){
 void parseCommand(char *command, char** parsed, int size){
   int i = 0;
   char *token;
+  //char oldCmd[size+1];
+
+  //strcpy(oldCmd, command);
   token = strtok(command, " ");
   while(token){
     if(i < size - 1){
@@ -69,6 +72,7 @@ void parseCommand(char *command, char** parsed, int size){
   }
   // Append the NULL as the last argument in the array
   parsed[i] = NULL;
+  //strcpy(command, oldCmd);
 }
 
 char** argsBuilder(char *filename, int num, ...){

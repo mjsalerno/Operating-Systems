@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 
-int main(int argc, char const *argv[])
-{
-	putenv("HELLO=hi");
-	system("printenv | grep hi");
-	printf("\n%s\n", getenv("HELLO"));
+int main(int argc, char const *argv[]) {
+	char *str = "HELLO HO$W ARE YOU?";
+	char *cp = strchr(str, '$');
+
+	printf("%s\n", cp);
+
 	return 0;
 }

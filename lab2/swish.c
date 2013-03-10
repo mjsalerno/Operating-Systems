@@ -43,19 +43,25 @@ int main(int argc, char ** argv, char **envp) {
         if (strlen(cmd)) {
             if (debug)printf("RUNNING:%s\n", cmd);
             parseCommand(cmd, arguments, MAX_ARGS);
+
             if (!strcmp(arguments[0], "exit")) {
                 finished = true;
-            } else if (!strcmp(arguments[0], "cd")) {
-                setenv("OLDPWD", wd, 1);
-                printf("oldpwd: %s\n", getenv("OLDPWD"));
+
+            } else if (!strcmp(arguments[0], "cd")) {                
                 if (!strcmp(arguments[1], "-")) {
                     chdir(getenv("OLDPWD"));
+
                 } else if (!strcmp(arguments[1], "~")) {
+                    setenv("OLDPWD", wd, 1);
+                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
                     chdir(parseEnv(envp, "HOME"));
+
                 } else {
+                    setenv("OLDPWD", wd, 1);
+                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
                     int val = chdir(arguments[1]);
                     if (val) printf("Sorry but %s does not exist\n", arguments[1]);
-                    //STILL NEEDS - IMPLEMENTATION
+                    
                 }
             } else {
                 spawn(arguments);

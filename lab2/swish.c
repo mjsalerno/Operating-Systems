@@ -34,9 +34,13 @@ int main(int argc, char ** argv, char **envp) {
         } else {
             script = fopen(argv[1], "r");
             readingScript = true;
-            finished = (NULL == fgets(cmd, MAX_INPUT, script));
-            removeNewline(cmd);
-            if(debug) printf("cmdFromFile:%s\n", cmd);
+
+            do {
+                finished = (NULL == fgets(cmd, MAX_INPUT, script));
+                removeNewline(cmd);
+            } while (*cmd == '#');
+
+            if (debug) printf("cmdFromFile:%s\n", cmd);
         }
     }
 
@@ -75,6 +79,7 @@ int main(int argc, char ** argv, char **envp) {
                     if (val) printf("Sorry but %s does not exist\n", arguments[1]);
 
                 }
+
             } else if (!strcmp(arguments[0], "set")) {
                 setenv(arguments[1], arguments[3], 1);
                 printf("envset: %s\n", getenv(arguments[1]));
@@ -91,13 +96,18 @@ int main(int argc, char ** argv, char **envp) {
             } else {
                 spawn(arguments);
             }
-            if (debug)printf("ENDED: %s (needs return val)\n", cmd);
+
+            if (debug) printf("ENDED: %s (needs return val)\n", cmd);
         }
 
         if (readingScript) {
-            finished = (NULL == fgets(cmd, MAX_INPUT, script));
-            removeNewline(cmd);
-            if(debug) printf("cmdFromFile:%s\n", cmd);
+
+            do {
+                finished = (NULL == fgets(cmd, MAX_INPUT, script));
+                removeNewline(cmd);
+            } while (*cmd == '#');
+
+            if (debug) printf("cmdFromFile:%s\n", cmd);
         }
 
     }

@@ -45,4 +45,5 @@ char** argsBuilder(char *filename, int num, ...);
  * @param msg char array containing the message to print.
  */
 void printError(char *msg);
+void removeNewline(char *string);
 #endif

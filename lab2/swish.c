@@ -18,38 +18,48 @@ int main(int argc, char ** argv, char **envp) {
 
     bool finished = false;
     char *prompt = "\033[0;32mswish>\033[0m ";
-    int debug = 0;
+    bool debug = false;
+    bool readingScript = false;
     char cmd[MAX_INPUT];
     char *arguments[MAX_ARGS];
     setbuf(stdout, NULL);
     char wd[MAX_PATH];
+    FILE *script;
     //char token[MAX_PATH] = {'\0'};
 
     if (argc > 1) {
         if (!strcmp("-d", argv[1])) {
-            debug = 1;
+            debug = true;
             printf("debugging on.\n");
+        } else {
+            script = fopen(argv[1], "r");
+            readingScript = true;
+            finished = (NULL == fgets(cmd, MAX_INPUT, script));
+            removeNewline(cmd);
+            if(debug) printf("cmdFromFile:%s\n", cmd);
         }
     }
 
-    while (!finished) {        
+    while (!finished) {
 
         // Print out the prompt
         getcwd(wd, MAX_PATH);
-        printf("%s[%s]%s %s ", BLUE, wd, NONE, prompt);
-        fgets(cmd, MAX_INPUT, stdin);
-        strtok(cmd, "\n"); // Thread safe?
+        if (!readingScript) {
+            printf("%s[%s]%s %s ", BLUE, wd, NONE, prompt);
+            fgets(cmd, MAX_INPUT, stdin);
+            strtok(cmd, "\n"); // Thread safe?
+        }
 
         // Evaluate the command
         if (strlen(cmd)) {
             if (debug)printf("RUNNING:%s\n", cmd);
             parseCommand(cmd, arguments, MAX_ARGS);
-            if (debug)printf("RUNNING after parse:%s\n", cmd);
+            //if (debug)printf("RUNNING after parse:%s\n", cmd);
 
             if (!strcmp(arguments[0], "exit")) {
                 finished = true;
 
-            } else if (!strcmp(arguments[0], "cd")) {                
+            } else if (!strcmp(arguments[0], "cd")) {
                 if (!strcmp(arguments[1], "-")) {
                     chdir(getenv("OLDPWD"));
 
@@ -69,13 +79,13 @@ int main(int argc, char ** argv, char **envp) {
                 setenv(arguments[1], arguments[3], 1);
                 printf("envset: %s\n", getenv(arguments[1]));
 
-            } else if (!strcmp(arguments[0], "echo")) {   //TODO: get this working for $ not in the first arg
+            } else if (!strcmp(arguments[0], "echo")) { //TODO: get this working for $ not in the first arg
                 char *cp = strchr(arguments[1], '$');
                 if (cp != NULL) {
-                  cp++;
-                  printf("%s = %s\n", cp, getenv(cp));
-                }else {
-                  spawn(arguments);  
+                    cp++;
+                    printf("%s = %s\n", cp, getenv(cp));
+                } else {
+                    spawn(arguments);
                 }
 
             } else {
@@ -83,6 +93,13 @@ int main(int argc, char ** argv, char **envp) {
             }
             if (debug)printf("ENDED: %s (needs return val)\n", cmd);
         }
+
+        if (readingScript) {
+            finished = (NULL == fgets(cmd, MAX_INPUT, script));
+            removeNewline(cmd);
+            if(debug) printf("cmdFromFile:%s\n", cmd);
+        }
+
     }
 
     return 0;

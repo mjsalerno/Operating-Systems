@@ -33,6 +33,16 @@ int contains(char *array[], char *key, int size){
   return 0;
 }
 
+void removeNewline(char *string) {
+  for (; *string != '\0'; ++string) {
+
+    if (*string == '\r' || *string == '\n') {
+      *string = '\0';
+    }
+
+  }
+}
+
 /**
  * Since the name of the program is always in args[0], use args[0] to execute the program.
  */

@@ -8,34 +8,35 @@
 #include "shellhelper.h"
 
 int main(int argc, char ** argv, char **envp){
-  bool running = true;
-  bool debug = false;
-  bool readingScript = false;
-  char *prompt = "swish> ";
-  char wd[MAX_PATH];
-  Command command = {0, 0};
-  FILE *script = NULL;
-  // Parse Args
+    bool running = true;
+    bool debug = false;
+    bool readingScript = false;
+    char *prompt = "swish> ";
+    char wd[MAX_PATH];
+    Command command = {0, 0};
+    FILE *script = NULL;
+    setbuf(stdout, NULL);
+    // Parse Args
  	if (argc > 1) {
-    if (!strcmp("-d", argv[1])) {
-      debug = true;
-      printf("debugging on.\n");
-    }else{
-      script = fopen(argv[1], "r");
-      readingScript = true;
-      do{
-        running = (NULL == fgets(command.value, MAX_INPUT, script));
-        removeNewline(command.value);
-      }while (*command.value == '#');
-      if (debug) printf("cmdFromFile:%s\n", command.value);
+        if (!strcmp("-d", argv[1])) {
+            debug = true;
+            printf("debugging on.\n");
+        }else{
+            script = fopen(argv[1], "r");
+            readingScript = true;
+            do{
+                running = (NULL == fgets(command.value, MAX_INPUT, script));
+                removeNewline(command.value);
+            }while (*command.value == '#');
+            if (debug) printf("cmdFromFile:%s\n", command.value);
+        }
     }
-  }
-  // Start in a loop
-  while(running){
-    if(!readingScript){
-      getcwd(wd, MAX_PATH);
-      printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
-    }
+    // Start in a loop
+    while(running){
+        if(!readingScript){
+            getcwd(wd, MAX_PATH);
+            printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
+        }
  		// Get input from keyboard
  		getInput(&command, prompt, wd);
  		// Adjust pointer to correct spot.
@@ -43,13 +44,13 @@ int main(int argc, char ** argv, char **envp){
  		// Give the current command a null
  		addCommand(&command, '\0');
  		printf("\n"); // Print the newline that got consumed by the getch() loop   
-    // Parse the command.
-    evaluateCommand(command.value, &running, wd, envp, script, &readingScript, debug);
-    // Reset Command
-    resetCommand(&command);
-  }
-  // If the script is running allow the user to kill the screen.
-  return 0;
+        // Parse the command.
+        evaluateCommand(command.value, &running, wd, envp, script, &readingScript, debug);
+        // Reset Command
+        resetCommand(&command);
+    }
+    // If the script is running allow the user to kill the screen.
+    return 0;
 }
 
 void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug){
@@ -115,8 +116,39 @@ if (*readingScript) {
 void getInput(Command *command, char *prompt, char *wd){
 	int ch;
 	while((ch = fgetc(stdin)) != '\n'){
-    addCommand(command, (char)ch);
-    printf("%c", (char)ch);
+    // Handle Arrow Keys
+    if(ch == 27 || ch == 127){
+      if(ch == 127){
+        backspace(command, prompt, wd);            
+      }else{
+        if((ch = fgetc(stdin)) == '['){
+            switch(ch = fgetc(stdin)){
+                case 'A':
+                    printf("Up Arrow was pressed\n");
+                    break;
+                case 'B':
+                    printf("Down Arrow was pressed\n");
+                    break;
+                case 'C':
+                    moveRight(command);
+                    break;
+                case 'D':
+                    moveLeft(command);
+                    break;
+                default:
+                    printf("Unknown key was pressed.\n");
+                    break;
+            }
+        }
+      }
+    }
+    else if(ch >= 32 && ch <= 126){
+      addCommand(command, (char)ch);
+      printf("%c", (char)ch);  
+    }else{
+
+      printf("Special Key: %d\n", ch);
+    }
   }
   /*
   while((ch = fgetc(stdin)) != '\n'){
@@ -160,26 +192,32 @@ void getInput(Command *command, char *prompt, char *wd){
 void moveLeft(Command *command){
 	if(command->index > 0){
     command->index --;
+    printf("\b");
   }
 }
 
 void moveRight(Command *command){
 	if(command->index < command->size){
     command->index++;
+    printf("\033[1C");
   }  
 }
 
-void backspace(Command *command){
+void backspace(Command *command, char* prompt, char* wd){
 	if(command->index > 0){
-		// Place the index in the correct spot
-		command->index--;
-		// Shift Everything Over
-		for(int i = command->index + 1; i < command->size; i++){
-			command->value[i - 1] = command->value[i];
-		}
-		// Adjust the end of the string
-		command->size--;
-		command->value[command->size] = '\0';
+	   // Place the index in the correct spot
+	   command->index--;
+    	// Shift Everything Over
+    	for(int i = command->index + 1; i < command->size; i++){
+    		command->value[i - 1] = command->value[i];
+    	}
+    	// Adjust the end of the string
+    	command->size--;
+    	command->value[command->size] = '\0';
+        // Erase the line
+        printf("\r\033[K");
+        // Print out the new line
+        printf("%s[%s] %s%s%s%s", BLUE, wd, GREEN, prompt, NONE, command->value);
   }
 }
 

@@ -15,6 +15,6 @@ void getInput(Command *command, char *prompt, char *wd);
 
 void moveLeft(Command *command);
 void moveRight(Command *command);
-void backspace(Command *command);
+void backspace(Command *command, char* prompt, char* wd);
 
 #endif

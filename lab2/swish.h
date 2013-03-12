@@ -7,11 +7,6 @@
 #define MAX_PATH  2048
 
 /**
- * Initializes the ncurses screen.
- */
-void setupScreen();
-
-/**
  * Attemps to parse, and spawn a process based on the command.
  */
 void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug);

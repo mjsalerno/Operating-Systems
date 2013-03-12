@@ -3,11 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-#include <ncurses.h>
 #include "swish.h"
 #include "command.h"
 #include "shellhelper.h"
-#include "swishui.h"
 
 int main(int argc, char ** argv, char **envp){
   bool running = true;
@@ -17,14 +15,11 @@ int main(int argc, char ** argv, char **envp){
   char wd[MAX_PATH];
   Command command = {0, 0};
   FILE *script = NULL;
-  // Initialize the ncurses screen    
-  setupScreen();
   // Parse Args
  	if (argc > 1) {
     if (!strcmp("-d", argv[1])) {
       debug = true;
-      printw("debugging on.\n");
-      refresh();
+      printf("debugging on.\n");
     }else{
       script = fopen(argv[1], "r");
       readingScript = true;
@@ -32,47 +27,29 @@ int main(int argc, char ** argv, char **envp){
         running = (NULL == fgets(command.value, MAX_INPUT, script));
         removeNewline(command.value);
       }while (*command.value == '#');
-      if (debug) printw("cmdFromFile:%s\n", command.value);
+      if (debug) printf("cmdFromFile:%s\n", command.value);
     }
   }
   // Start in a loop
   while(running){
     if(!readingScript){
       getcwd(wd, MAX_PATH);
-      printw("[%s] %s", wd, prompt);
+      printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
     }
  		// Get input from keyboard
  		getInput(&command, prompt, wd);
  		// Adjust pointer to correct spot.
  		command.index = command.size;
- 		moveCursorX(stdscr, command.size - command.index);
  		// Give the current command a null
  		addCommand(&command, '\0');
- 		printw("\n"); // Print the newline that got consumed by the getch() loop   
-    refresh();
+ 		printf("\n"); // Print the newline that got consumed by the getch() loop   
     // Parse the command.
     evaluateCommand(command.value, &running, wd, envp, script, &readingScript, debug);
     // Reset Command
     resetCommand(&command);
-    // Make sure that the screen gets redrawn.
-    refresh();
   }
   // If the script is running allow the user to kill the screen.
-  if(readingScript){
-    printw("Press any key to continue.\n");
-    refresh();
-    getch();
-  }
-  endwin();
   return 0;
-}
-
-void setupScreen(){
-	initscr();
-  noecho();
-  raw();
-  scrollok(stdscr, true);
-  keypad(stdscr, true);
 }
 
 void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug){
@@ -80,8 +57,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
   
   if (strlen(cmd)) {
     if (debug){
-      printw("RUNNING:%s\n", cmd);
-      refresh();
+      printf("RUNNING:%s\n", cmd);
     }
     parseCommand(cmd, arguments, MAX_ARGS);
     //if (debug)printf("RUNNING after parse:%s\n", cmd);
@@ -94,14 +70,14 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
 
         } else if (!strcmp(arguments[1], "~")) {
             setenv("OLDPWD", wd, 1);
-            if (debug) printw("oldpwd: %s\n", getenv("OLDPWD"));
+            if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
             chdir(parseEnv(envp, "HOME"));
 
         } else {
             setenv("OLDPWD", wd, 1);
-            if (debug) printw("oldpwd: %s\n", getenv("OLDPWD"));
+            if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
             int val = chdir(arguments[1]);
-            if (val) printw("Sorry but %s does not exist\n", arguments[1]);
+            if (val) printf("Sorry but %s does not exist\n", arguments[1]);
         }
 
     } else if (!strcmp(arguments[0], "set")) {
@@ -112,7 +88,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
         char *cp = strchr(arguments[1], '$');
         if (cp != NULL) {
             cp++;
-            printw("%s = %s\n", cp, getenv(cp));
+            printf("%s = %s\n", cp, getenv(cp));
         } else {
             spawn(arguments);
         }
@@ -122,8 +98,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
     }
 
     if (debug){
-        printw("ENDED: %s (needs return val)\n", cmd);
-        refresh();
+        printf("ENDED: %s (needs return val)\n", cmd);
     }
 }
 
@@ -133,57 +108,26 @@ if (*readingScript) {
         removeNewline(cmd);
     } while (*cmd == '#');
 
-    if (debug) printw("cmdFromFile:%s\n", cmd);
-}
-
-/*
-  if(strlen(cmd)){
-      if(debug){
-      	printw("RUNNING:%s\n", cmd);
-      	refresh();
-      }
-      parseCommand(cmd, arguments, MAX_ARGS);
-      if(!strcmp(arguments[0], "exit")){
-          *running = false;
-      }else if(!strcmp(arguments[0], "cd")){
-          setenv("OLDPWD", wd, 1);
-          printw("oldpwd: %s\n", getenv("OLDPWD"));
-          if(!strcmp(arguments[1], "-")) {
-              chdir(getenv("OLDPWD"));
-          }else if (!strcmp(arguments[1], "~")){
-              chdir(parseEnv(envp, "HOME"));
-          }else{
-              int val = chdir(arguments[1]);
-              if (val){
-              	printw("Sorry but %s does not exist\n", arguments[1]);
-              } 
-              //STILL NEEDS - IMPLEMENTATION
-          }
-      }else{
-          spawn(arguments);
-      }
-      if (debug)printw("ENDED: %s (needs return val)\n", cmd);
+    if (debug) printf("cmdFromFile:%s\n", cmd);
   }
-  */
 }
 
 void getInput(Command *command, char *prompt, char *wd){
 	int ch;
-	while((ch = getch()) != '\n'){
+	while((ch = fgetc(stdin)) != '\n'){
+    addCommand(command, (char)ch);
+    printf("%c", (char)ch);
+  }
+  /*
+  while((ch = fgetc(stdin)) != '\n'){
 		switch(ch){
 			case KEY_UP:
-				resetCursorX(stdscr);
-				clrtoeol();
-				refresh();
 				setCommand(command, "History up!");
-				printw("[%s] %s%s", wd, prompt, command->value);
+				printf("[%s] %s%s", wd, prompt, command->value);
 				break;
 			case KEY_DOWN:
-				resetCursorX(stdscr);
-				clrtoeol();
-				refresh();
 				setCommand(command, "History down!");
-				printw("[%s] %s%s", wd, prompt, command->value);
+				printf("[%s] %s%s", wd, prompt, command->value);
 				break;
 			case KEY_LEFT:
 				moveLeft(command);
@@ -210,20 +154,18 @@ void getInput(Command *command, char *prompt, char *wd){
 				addCommand(command, ch);
 				break;
 		}
-	}
+	}*/
 }
 
 void moveLeft(Command *command){
 	if(command->index > 0){
     command->index --;
-    moveCursorX(stdscr, -1);
   }
 }
 
 void moveRight(Command *command){
 	if(command->index < command->size){
     command->index++;
-    moveCursorX(stdscr, 1);
   }  
 }
 
@@ -238,10 +180,6 @@ void backspace(Command *command){
 		// Adjust the end of the string
 		command->size--;
 		command->value[command->size] = '\0';
-		// Reflect Changes to the user in terminal
-    moveCursorX(stdscr, -1);
-    refresh();
-    delch();
   }
 }
 

@@ -2,18 +2,15 @@
 #define SHELLHELPER_H
 /* Cheat Sheet for printing out colors, and special things in the terminal */
 /* 0 -> Normal, 1 -> Bold, 4 -> underline, 9 -> Strike */
-#define RED       "\033[0;31m"        /* 0 -> normal ;  31 -> red */
-#define CYAN      "\033[0;36m"        /* 1 -> bold ;  36 -> cyan */
-#define GREEN     "\033[0;32m"        /* 4 -> underline ;  32 -> green */
-#define BLUE      "\033[0;34m"        /* 9 -> strike ;  34 -> blue */
-#define BLACK     "\033[0;30m"
-#define BROWN     "\033[0;33m"
-#define MAGENTA   "\033[0;35m"
-#define GRAY      "\033[0;37m"
+#define RED       "\033[1;31m"        /* 0 -> normal ;  31 -> red */
+#define CYAN      "\033[1;36m"        /* 1 -> bold ;  36 -> cyan */
+#define GREEN     "\033[1;32m"        /* 4 -> underline ;  32 -> green */
+#define BLUE      "\033[1;34m"        /* 9 -> strike ;  34 -> blue */
+#define BLACK     "\033[1;30m"
+#define BROWN     "\033[1;33m"
+#define MAGENTA   "\033[1;35m"
+#define GRAY      "\033[1;37m"
 #define NONE      "\033[0m"           /* to flush the previous property */
-/* pipe constants */
-#define PIPE_READ  0
-#define PIPE_WRITE 1
 
 /**
  * Searchs the array containing the enviroment variables and looks for the provided keyword.

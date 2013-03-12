@@ -1,0 +1,18 @@
+Exercise     Description          Status         Who    Notes
+===================================================================
+Exercise  1: Implement commands  - Done
+Exercise  2: cd and pwd          - Done
+Exercise  3: add pwd to prompt   - Done
+Exercise  4: Add debugging       - Done
+Exercise  5: Variables and Echo  - Done									Needs more bug Testing
+Exercise  6: Redirection         - in progress   Paul
+Exercise  7: Scripting           - in progress   Mike
+Exercise  8: Job Control         - none
+Exercise  9: History             - in progress   Paul
+Exercise 10: Draw Wolfie         - none
+
+Other     1: Ncurses integration - in progress   Paul  Trouble with std out from third party programs
+Other     2: Extra Credit 1			 - none                Time counting; 5pts
+Other     3: Extra Credit 2      - none								 Globbing; 10pts
+Other     4: Extra Credit 3      - none								 Conditional Flow; 15pts
+Other     5: Extra Credit 4      - none 							 Tab completion; 10pts

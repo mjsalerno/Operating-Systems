@@ -1,12 +1,20 @@
-all: swish
+CC    = gcc
+CLANG = clang
+FLAGS = -Wall -Werror -std=c99 -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200112L
+LIBS  = -lncurses
+SWISH = swish 
 
-swish: swish.c
-	gcc -g -Wall -Werror -std=c99 -o swish swish.c shellhelper.c
+swish: swish.c command.o swishui.o shellhelper.o command.h shellhelper.h swishui.h
+	$(CC) $(FLAGS) -g -o $(SWISH) swish.c swishui.o command.o shellhelper.o $(LIBS)
 
-handin:	clean
-	@if [ `git status --porcelain| wc -l` != 0 ] ; then echo "\n\n\n\n\t\tWARNING: YOU HAVE UNCOMMITTED CHANGES\n\n    Consider committing any pending changes and rerunning make handin.\n\n\n\n"; fi
-	@git tag -f -a lab2-handin -m "Lab2 Handin"
-	@git push --tags handin
+shellhelper.o: shellhelper.c shellhelper.h
+	$(CC) $(FLAGS) $(LIBS) -c shellhelper.c
+
+command.o: command.c command.h
+	$(CC) $(FLAGS) -c command.c
+
+swishui.o: swishui.c swishui.h
+	$(CC) $(FLAGS) $(LIBS) -c swishui.c
 
 clean:
-	rm -f *~ *.o swish
+	rm *.o $(SWISH)

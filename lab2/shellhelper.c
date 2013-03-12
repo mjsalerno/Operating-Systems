@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ncurses.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "shellhelper.h"
@@ -48,29 +49,71 @@ void removeNewline(char *string) {
  */
 void spawn(char **args){
   pid_t pid;
-  int status;
-  // Attempt to fork
+  int status, stdinpipe[2], stdoutpipe[2];
+  // Open pipes
+  if(pipe(stdinpipe) < 0){
+  	printError("Trouble opening the stdin pipe.");
+  	return;
+  }
+  if(pipe(stdoutpipe) < 0){
+  	printError("Trouble opening the stdout pipe.");
+  	close(stdinpipe[PIPE_READ]);
+  	close(stdinpipe[PIPE_WRITE]);
+  	return;
+  }
+  // Fork
   if((pid = fork()) < 0){
+  	// Close pipes
+    close(stdinpipe[PIPE_READ]);
+    close(stdinpipe[PIPE_WRITE]);
+    close(stdoutpipe[PIPE_READ]);
+    close(stdoutpipe[PIPE_WRITE]);
     printError("Unable to fork child process.\n");
   }
   // If the fork was successful attempt to execute the program.   
   else if(pid == 0){
-    if(execvp(args[0], args) < 0){
-      fprintf(stderr, "\033[0;31mAn error occured while trying to start '%s'\033[0m\n", args[0]);
+  	/* This is now in the child */
+  	if(dup2(stdinpipe[PIPE_READ], STDIN_FILENO) == -1){ // Redirecting STDIN
+  		printError("Trouble using dup2 on the pipe to redirect stdin.\n");
+  		return;
+  	}
+  	if(dup2(stdoutpipe[PIPE_WRITE], STDOUT_FILENO) == -1){ // Redirecting STDOUT
+  		printError("Trouble using dup2 on the pipe to redirect stdout.\n");
+  		return;
+  	}
+  	if(dup2(stdoutpipe[PIPE_WRITE], STDERR_FILENO) == -1){ // Redirecting STDERR
+      printError("Trouble using dup2 on the pipe to redirect stderr");
+      return;
+    }
+    // Close parent pipes
+    close(stdinpipe[PIPE_READ]);
+    close(stdinpipe[PIPE_WRITE]);
+    close(stdoutpipe[PIPE_READ]);
+    close(stdoutpipe[PIPE_WRITE]);
+    // Execute
+  	if(execvp(args[0], args) < 0){
+      printw("An error occurred while trying to start '%s'\n", args[0]);
+      refresh();
       exit(1);
     }
   }else{
-    // Wait for the child process to finish
-    while(wait(&status) != pid) ;
+    /* This is the parent*/
+    // Close child pipes
+    close(stdinpipe[PIPE_READ]);
+    close(stdoutpipe[PIPE_WRITE]); 
+    char nchar;
+    // Just a char by char read here, you can change it accordingly
+    while (read(stdoutpipe[PIPE_READ], &nchar, 1) == 1) {
+      printw("%c", nchar);
+    }
+    printw("\n");
+    while(wait(&status) != pid);
   }
 }
 
 void parseCommand(char *command, char** parsed, int size){
   int i = 0;
   char *token;
-  //char oldCmd[size+1];
-
-  //strcpy(oldCmd, command);
   token = strtok(command, " ");
   while(token){
     if(i < size - 1){
@@ -82,7 +125,6 @@ void parseCommand(char *command, char** parsed, int size){
   }
   // Append the NULL as the last argument in the array
   parsed[i] = NULL;
-  //strcpy(command, oldCmd);
 }
 
 char** argsBuilder(char *filename, int num, ...){
@@ -92,7 +134,8 @@ char** argsBuilder(char *filename, int num, ...){
   va_start(arguments, num);
   // Loop through the arguments
   for(i = 0; i < num; i++){
-    printf("Arg: %s\n", va_arg(arguments, char*));
+    printw("Arg: %s\n", va_arg(arguments, char*));
+    refresh();
   }  
   // Clean up the list  
   va_end(arguments);
@@ -100,6 +143,7 @@ char** argsBuilder(char *filename, int num, ...){
 }
 
 void printError(char *msg){
-  fprintf(stderr, "\033[0;31m%s\033[0m", msg);
+	printw("%s", msg);  
+	refresh();
 }
 

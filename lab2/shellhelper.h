@@ -11,6 +11,9 @@
 #define MAGENTA   "\033[0;35m"
 #define GRAY      "\033[0;37m"
 #define NONE      "\033[0m"           /* to flush the previous property */
+/* pipe constants */
+#define PIPE_READ  0
+#define PIPE_WRITE 1
 
 /**
  * Searchs the array containing the enviroment variables and looks for the provided keyword.
@@ -45,5 +48,6 @@ char** argsBuilder(char *filename, int num, ...);
  * @param msg char array containing the message to print.
  */
 void printError(char *msg);
+
 void removeNewline(char *string);
 #endif

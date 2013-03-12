@@ -1,3 +1,4 @@
 swish
 *.out
 *.exe
+*.o

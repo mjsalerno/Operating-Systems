@@ -1,4 +1,4 @@
 #PLEASE AVOID ME
-ls
+ls #avoid this too
 ls -al
 echo DONE!!

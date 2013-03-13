@@ -40,6 +40,11 @@ int main(int argc, char ** argv, char **envp) {
     }
     // Start in a loop
     while (running) {
+        /* Vars for handling the splitting of the command args */
+        char *cmds[MAX_INPUT];
+        char *cmd;
+        int cmdsIndex = 0; 
+
         if (!readingScript) {
             getcwd(wd, MAX_PATH);
             printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
@@ -51,11 +56,18 @@ int main(int argc, char ** argv, char **envp) {
             addCommand(&command, '\0');
             printf("\n"); // Print the newline that got consumed by the getch() loop   
         }
-        // Parse the command.
-        evaluateCommand(command.value, &running, wd, envp, script, &readingScript, debug);
+        // support redirection
+        cmd = strtok(command.value, "<|>");        
+        while(cmd){
+            cmds[cmdsIndex++] = cmd;
+            cmd = strtok(NULL, "<|>");
+        }
+        for(int i = 0; i < cmdsIndex; i++){
+            evaluateCommand(cmds[i], &running, wd, envp, script, &readingScript, debug);
+        }
         // Reset Command
         resetCommand(&command);
-
+        // Scripting Support
         if (readingScript) {
             do {
                 running = (NULL != fgets(cmdFromFile, MAX_INPUT, script));
@@ -68,7 +80,6 @@ int main(int argc, char ** argv, char **envp) {
             if (debug) printf("-----------------\ncmdFromFile:%s\n-----------------\n", command.value);
         }
     }
-    // If the script is running allow the user to kill the screen.
     return 0;
 }
 
@@ -160,43 +171,6 @@ void getInput(Command *command, char *prompt, char *wd) {
             printf("Special Key: %d\n", ch);
         }
     }
-    /*
-    while((ch = fgetc(stdin)) != '\n'){
-                  switch(ch){
-                          case KEY_UP:
-                                  setCommand(command, "History up!");
-                                  printf("[%s] %s%s", wd, prompt, command->value);
-                                  break;
-                          case KEY_DOWN:
-                                  setCommand(command, "History down!");
-                                  printf("[%s] %s%s", wd, prompt, command->value);
-                                  break;
-                          case KEY_LEFT:
-                                  moveLeft(command);
-                                  break;
-                          case KEY_RIGHT:
-                                  moveRight(command);
-                                  break;
-                          case KEY_BACKSPACE:
-                                  backspace(command);
-                                  break;
-                          case KEY_DC:
-                                  // Consume delete key
-                                  break;
-                          case '\t':
-                                  // Consume Tab Key
-                                  break;
-                          case 27:
-                                  // Consume Escape Key
-                                  break;
-                          default:
-                                  printw("%c", ch);
-                                  //insch(ch);
-                                  //moveCursorX(stdscr, 1);
-                                  addCommand(command, ch);
-                                  break;
-                  }
-          }*/
 }
 
 void moveLeft(Command *command) {

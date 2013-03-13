@@ -45,7 +45,7 @@ void removeNewline(char *string) {
 /**
  * Since the name of the program is always in args[0], use args[0] to execute the program.
  */
-void spawn(char **args){
+void spawn(char **args, REDIRECT_TYPE *redirects, int redirectIndex, bool two){
   pid_t pid;
   int status;
   // Fork

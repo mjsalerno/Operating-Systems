@@ -1,5 +1,8 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
+#include <stdbool.h>
+#include "swish.h"
+
 /* Cheat Sheet for printing out colors, and special things in the terminal */
 /* 0 -> Normal, 1 -> Bold, 4 -> underline, 9 -> Strike */
 #define RED       "\033[1;31m"        /* 0 -> normal ;  31 -> red */
@@ -24,7 +27,7 @@ char* parseEnv(char **envp, char *keyword);
  * Performs fork & exec using the arguments provided.
  * @param args NULL terminated array of char* that contains the argument(s) to the binary.
  */
-void spawn(char **args);
+void spawn(char **args, REDIRECT_TYPE *redirects, int redirectIndex, bool two);
 
 /**
  * Parses a string a puts the results in the parsed array.

@@ -44,6 +44,8 @@ int main(int argc, char ** argv, char **envp) {
         char *cmds[MAX_INPUT];
         char *cmd;
         int cmdsIndex = 0; 
+        REDIRECT_TYPE redirects[MAX_INPUT];
+        bool two;
 
         if (!readingScript) {
             getcwd(wd, MAX_PATH);
@@ -57,13 +59,15 @@ int main(int argc, char ** argv, char **envp) {
             printf("\n"); // Print the newline that got consumed by the getch() loop   
         }
         // support redirection
+        searchRedirect(command.value, redirects);
         cmd = strtok(command.value, "<|>");        
         while(cmd){
             cmds[cmdsIndex++] = cmd;
             cmd = strtok(NULL, "<|>");
         }
+        two = (cmdsIndex == 2) ? true : false;
         for(int i = 0; i < cmdsIndex; i++){
-            evaluateCommand(cmds[i], &running, wd, envp, script, &readingScript, debug);
+            evaluateCommand(cmds[i], &running, wd, envp, script, &readingScript, debug, redirects, i, two);
         }
         // Reset Command
         resetCommand(&command);
@@ -83,7 +87,7 @@ int main(int argc, char ** argv, char **envp) {
     return 0;
 }
 
-void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug) {
+void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int redirectIndex, bool two) {
     char *arguments[MAX_ARGS];
 
     if (strlen(cmd)) {
@@ -121,11 +125,11 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
                 cp++;
                 printf("%s = %s\n", cp, getenv(cp));
             } else {
-                spawn(arguments);
+                spawn(arguments, redirects, redirectIndex, two);
             }
 
         } else {
-            spawn(arguments);
+            spawn(arguments, redirects, redirectIndex, two);
         }
 
         if (debug) {
@@ -171,6 +175,24 @@ void getInput(Command *command, char *prompt, char *wd) {
             printf("Special Key: %d\n", ch);
         }
     }
+}
+
+void searchRedirect(char* cmd, REDIRECT_TYPE *redirects){
+    int count = 0;
+    for(int i = 0; i < strlen(cmd); i++){
+        switch(cmd[i]){
+            case PIPE:
+                redirects[count++] = PIPE;
+                break;
+            case REDIRECT_LEFT:
+                redirects[count++] = REDIRECT_LEFT;
+                break;
+            case REDIRECT_RIGHT:
+                redirects[count++] = REDIRECT_RIGHT;
+                break;
+        }
+    }
+    redirects[count] = REDIRECT_NONE;
 }
 
 void moveLeft(Command *command) {

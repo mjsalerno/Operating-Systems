@@ -63,4 +63,5 @@ void removeNewline(char *string);
 
 void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
+int contains(char *array[], char key);
 #endif

@@ -26,12 +26,12 @@ char* parseEnv(char **envp, char *keyword){
 	
 }
 
-int contains(char *array[], char *key, int size){
-  for(int i = 0; i < size; i++){
-    if(strcmp(array[i], key) == 0)
+int contains(char *array[], char key){
+  for(int i = 0; *(array + i) != '\0'; i++){
+    if(strchr (array[i], (int)(key)) != NULL)
       return i;
   }
-  return 0;
+  return -1;
 }
 
 void removeNewline(char *string) {

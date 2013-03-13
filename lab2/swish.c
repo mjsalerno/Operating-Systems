@@ -119,6 +119,7 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
                     if (val) printf("Sorry but %s does not exist\n", arguments[1]);
                 }
 
+            
             } else if (!strcmp(arguments[0], "set")) {
                 setenv(arguments[1], arguments[3], 1);
                 printf("envset: %s\n", getenv(arguments[1]));
@@ -134,14 +135,15 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
 
             } else {
                 spawn(arguments);
-            }
-
-            if (debug) {
-                printf("ENDED: %s (needs return val)\n", *cmd);
-            }
+            }    
         }
     } else {
         spawnRedirect(cmd, cmdSize, redirects, rdSize);
+    }
+
+        if (debug) {
+            printf("ENDED: %s (needs return val)\n", cmd);
+        }
     }
 
 }

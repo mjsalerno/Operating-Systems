@@ -19,7 +19,7 @@ int main(int argc, char ** argv, char **envp) {
     char *cp;
     FILE *historyFile;
     char *historyList[MAX_HISTORY];
-    char **historyPtr;
+    int historyPtr = 0;
     setbuf(stdout, NULL);
 
     // Parse Args
@@ -51,14 +51,19 @@ int main(int argc, char ** argv, char **envp) {
                 historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
                 *historyList[i] = '\0';
             }
-            
+
             int i = 0;
             if (historyFile != NULL) {
-                for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i);
+                for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i){
+                    removeNewline(historyList[i]);
+                }
                 fclose(historyFile);
+                // for (int i = 0; i < 10; ++i){
+                //    printf("HISTORY %d:%s\n", i, historyList[i]);
+                // }
             }
-            historyPtr = historyList;
-            *historyPtr = historyList[i];
+            historyPtr = i;
+        
     }
 
     // Start in a loop
@@ -73,16 +78,20 @@ int main(int argc, char ** argv, char **envp) {
             getcwd(wd, MAX_PATH);
             printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
             // Get input from keyboard
-            getInput(&command, prompt, wd);
+            getInput(&command, prompt, wd, historyPtr, historyList);
             // Adjust pointer to correct spot.
             command.index = command.size;
             // Give the current command a null
             addCommand(&command, '\0');
             printf("\n"); // Print the newline that got consumed by the getch() loop   
 
-            strcpy(*historyPtr, command.value);
-            printf("added command: %s\n", *(historyPtr));
-            historyPtr++;            
+            if(strcmp(command.value, "exit") != 0){
+                strcpy(historyList[historyPtr], command.value);
+                if (debug) printf("added command to historyList: %s\n", historyList[historyPtr]);
+            }
+            
+            historyDn(&historyPtr);
+            // historyPtr++;
         }
         // support redirection
         int rdSize = searchRedirect(command.value, redirects);
@@ -109,22 +118,22 @@ int main(int argc, char ** argv, char **envp) {
             if (debug) printf("-----------------\ncmdFromFile:%s\n-----------------\n", command.value);
         }
     }
-    
+
+    // for (int i = 0; i < 10; ++i){
+    //     printf("HISTORY %d:%s\n", i, historyList[i]);
+    // }
+
     //Write historyList to the history file.
     if(!readingScript) {
-        printf("ABOUT TO OPEN HISTORY FILE\n");
+        if (debug) printf("ABOUT TO OPEN HISTORY FILE\n");
         historyFile = fopen(HISTORY_FILE_NAME, "w");        
-        printf("OPENED HISTORY FILE\n");
-        for (int i = 0; (i < MAX_HISTORY) && (*historyList[i+1] != '\0'); ++i) {
-            fprintf(historyFile, "%s\n", historyList[i]);
-            printf("WROTE TO FILE: %s\n", historyList[i]);
-        }
-
-        // for (int i = 0; i < MAX_HISTORY; ++i) {
-        //     free(historyList[i]);
-        // }
-
+        if (debug) printf("OPENED HISTORY FILE\n");
+        writeHistoryFile(historyFile, historyList);
         fclose(historyFile);
+
+        for (int i = 0; i < MAX_HISTORY; ++i) {
+            free(historyList[i]);
+        }
     }
 
 
@@ -133,7 +142,7 @@ int main(int argc, char ** argv, char **envp) {
 
 void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int rdSize) {
     char *arguments[MAX_ARGS];
-    
+
     // Something went wrong stop evaluating.
     if(cmdSize <= 0){
         return;
@@ -196,7 +205,7 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
 
 }
 
-void getInput(Command *command, char *prompt, char *wd) {
+void getInput(Command *command, char *prompt, char *wd, int historyPtr, char *historyList[]) {
     int ch;
     while ((ch = fgetc(stdin)) != '\n') {
         // Handle Arrow Keys
@@ -207,10 +216,14 @@ void getInput(Command *command, char *prompt, char *wd) {
                 if ((ch = fgetc(stdin)) == '[') {
                     switch (ch = fgetc(stdin)) {
                         case 'A':
-                            printf("Up Arrow was pressed\n");
+                            // printf("Up Arrow was pressed\n");
+                            historyUp(&historyPtr);
+                            replaceCommand(historyList[historyPtr], command, wd, prompt);
                             break;
                         case 'B':
-                            printf("Down Arrow was pressed\n");
+                            // printf("Down Arrow was pressed\n");
+                            historyDn(&historyPtr);
+                            replaceCommand(historyList[historyPtr], command, wd, prompt);
                             break;
                         case 'C':
                             moveRight(command);

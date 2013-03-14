@@ -22,7 +22,7 @@ typedef enum REDIRECT_TYPE REDIRECT_TYPE;
  */
 void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int rdSize);
 
-void getInput(Command *command, char *prompt, char *wd);
+void getInput(Command *command, char *prompt, char *wd, int historyPtr, char *historyList[]);
 
 /**
  * Searchs the given string for redirection operators(PIPE_TYPE).
@@ -33,5 +33,5 @@ int searchRedirect(char* cmd, REDIRECT_TYPE *redirects);
 void moveLeft(Command *command);
 void moveRight(Command *command);
 void backspace(Command *command, char* prompt, char* wd);
-
+void writeHistoryFile(FILE *historyFile, char *historyList[]);
 #endif

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "shellhelper.h"
+#include "swish.h"
 
 char* parseEnv(char **envp, char *keyword){
   char *cp, *at;
@@ -39,6 +40,63 @@ void removeNewline(char *string) {
     if (*string == '\r' || *string == '\n') {
       *string = '\0';
     }
+
+  }
+}
+
+void historyDn(int *historyPtr) {
+  if(*historyPtr >= (MAX_HISTORY - 1)) {
+    *historyPtr = 0;
+  } else {
+      (*historyPtr)++;
+  }
+}
+
+void historyUp(int *historyPtr) {
+  if(*historyPtr <= 0) {
+    *historyPtr = MAX_HISTORY - 1;
+  } else {
+      (*historyPtr)--;
+  }
+}
+
+void writeHistoryFile(FILE *historyFile, char *historyList[]) {
+  for (int i = 0; i < MAX_HISTORY; ++i) {
+    if (*historyList[i] != '\0') {
+      fprintf(historyFile, "%s\n", historyList[i]);
+    }
+  }
+}
+
+void replaceCommand(char *cmd, Command *command, char* wd, char *prompt){
+  // Erase the line
+  printf("\r\033[K");
+  // Print out the new line
+  setCommand(command, cmd);
+  printf("%s[%s] %s%s%s%s", BLUE, wd, GREEN, prompt, NONE, command->value);
+}
+
+/**
+ * Since the name of the program is always in args[0], use args[0] to execute the program.
+ */
+void spawn(char **args){
+  pid_t pid;
+  int status;
+  // Fork
+  if((pid = fork()) < 0){
+  	printError("Unable to fork child process.\n");
+  }
+  // If the fork was successful attempt to execute the program.   
+  else if(pid == 0){
+  	/* This is now in the child */
+  	// Execute
+  	if(execvp(args[0], args) < 0){
+      fprintf(stderr, "%sAn error occured while trying to start '%s'%s\n", RED, args[0], NONE);
+      exit(1);
+    }
+  }else{
+    /* This is the parent*/
+    while(wait(&status) != pid);
   }
 }
 

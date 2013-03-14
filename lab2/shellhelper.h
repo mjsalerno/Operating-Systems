@@ -1,5 +1,6 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
+#include "command.h"
 #include <stdbool.h>
 #include "swish.h"
 
@@ -64,4 +65,7 @@ void removeNewline(char *string);
 void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 int contains(char *array[], char key);
+void historyDn(int *historyPtr);
+void historyUp(int *historyPtr);
+void replaceCommand(char *cmd, Command *command, char* wd, char *prompt);
 #endif

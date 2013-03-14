@@ -3,8 +3,10 @@
 #include <stdbool.h>
 #include "command.h"
 
-#define MAX_ARGS  1024
-#define MAX_PATH  2048
+#define MAX_ARGS  	 1024
+#define MAX_PATH  	 2048
+#define MAX_HISTORY  1000
+#define HISTORY_FILE_NAME ".history"
 
 enum REDIRECT_TYPE{
 	PIPE = '|',

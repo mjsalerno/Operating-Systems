@@ -17,6 +17,9 @@ int main(int argc, char ** argv, char **envp) {
     FILE *script = NULL;
     char cmdFromFile[MAX_INPUT];
     char *cp;
+    FILE *historyFile;
+    char *historyList[MAX_HISTORY];
+    char **historyPtr;
     setbuf(stdout, NULL);
 
     // Parse Args
@@ -39,6 +42,25 @@ int main(int argc, char ** argv, char **envp) {
             if (debug) printf("-----------------\ncmdFromFile:%s\n-----------------\n", command.value);
         }
     }
+
+    //Read History
+    if(!readingScript) {
+        historyFile = fopen(HISTORY_FILE_NAME, "r");
+        
+            for (int i = 0; i < MAX_HISTORY; ++i) {
+                historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
+                *historyList[i] = '\0';
+            }
+            
+            int i = 0;
+            if (historyFile != NULL) {
+                for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i);
+                fclose(historyFile);
+            }
+            historyPtr = historyList;
+            *historyPtr = historyList[i];
+    }
+
     // Start in a loop
     while (running) {
         /* Vars for handling the splitting of the command args */
@@ -57,6 +79,10 @@ int main(int argc, char ** argv, char **envp) {
             // Give the current command a null
             addCommand(&command, '\0');
             printf("\n"); // Print the newline that got consumed by the getch() loop   
+
+            strcpy(*historyPtr, command.value);
+            printf("added command: %s\n", *(historyPtr));
+            historyPtr++;            
         }
         // support redirection
         int rdSize = searchRedirect(command.value, redirects);
@@ -79,9 +105,29 @@ int main(int argc, char ** argv, char **envp) {
                 *cp = '\0';
             }
             setCommand(&command, cmdFromFile);
+            if (!running) fclose(script);
             if (debug) printf("-----------------\ncmdFromFile:%s\n-----------------\n", command.value);
         }
     }
+    
+    //Write historyList to the history file.
+    if(!readingScript) {
+        printf("ABOUT TO OPEN HISTORY FILE\n");
+        historyFile = fopen(HISTORY_FILE_NAME, "w");        
+        printf("OPENED HISTORY FILE\n");
+        for (int i = 0; (i < MAX_HISTORY) && (*historyList[i+1] != '\0'); ++i) {
+            fprintf(historyFile, "%s\n", historyList[i]);
+            printf("WROTE TO FILE: %s\n", historyList[i]);
+        }
+
+        // for (int i = 0; i < MAX_HISTORY; ++i) {
+        //     free(historyList[i]);
+        // }
+
+        fclose(historyFile);
+    }
+
+
     return 0;
 }
 
@@ -119,31 +165,33 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
                     if (val) printf("Sorry but %s does not exist\n", arguments[1]);
                 }
 
-            
-            } else if (!strcmp(arguments[0], "set")) {
-                setenv(arguments[1], arguments[3], 1);
-                printf("envset: %s\n", getenv(arguments[1]));
+        } else if (!strcmp(arguments[0], "set")) {
+            setenv(arguments[1], arguments[3], 1);
+            printf("envset: %s\n", getenv(arguments[1]));
 
-            } else if (!strcmp(arguments[0], "echo")) { //TODO: get this working for $ not in the first arg
-                char *cp = strchr(arguments[1], '$');
-                if (cp != NULL) {
-                    cp++;
-                    printf("%s = %s\n", cp, getenv(cp));
-                } else {
-                    spawn(arguments);
-                }
-
+        } else if (!strcmp(arguments[0], "echo")) {
+            int index = contains(arguments, '$');
+            char *cp = NULL;
+            if(index > -1) cp = arguments[index];
+            if (cp != NULL) {
+                cp++;
+                printf("%s\n", getenv(cp));
             } else {
                 spawn(arguments);
-            }    
+            }
+
+        } else {
+            spawn(arguments);
+        }
+		if (debug) {
+            printf("ENDED: %s (needs return val)\n", cmd);
+		}
         }
     } else {
         spawnRedirect(cmd, cmdSize, redirects, rdSize);
     }
 
-        if (debug) {
-            printf("ENDED: %s (needs return val)\n", cmd);
-        }
+        
     }
 
 }

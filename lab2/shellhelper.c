@@ -147,11 +147,17 @@ void replaceCommand(char *cmd, Command *command, char* wd, char *prompt){
 
 void parseCommand(char *command, char** parsed, int size){
   int i = 0;
+  char *index;
   char *token;
   token = strtok(command, " ");
   while(token){
     if(i < size - 1){
+      index = strchr(token, '$');      
       parsed[i++] = token;
+      if(index != NULL){
+        index++;
+        parsed[i-1] = getenv(index);
+      }
       token = strtok(NULL, " "); 
     }else{
       printError("Too Many Arguments provided.\n");

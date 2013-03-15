@@ -102,6 +102,40 @@ FILE* openHistoryFile(char *rights) {
   return fopen(path, rights);
 }
 
+void printWolf(){
+  printf("\n");
+  printf("                                         ++.                   ``               \n");
+  printf("                                         /yys:                 :y/`             \n");
+  printf("                                         +yyyys-               +yyy:            \n");
+  printf("                                         oyhhhhyo`             syhhys.          \n");
+  printf("                                        `yyhhhhhys.           .yyhhhyy-         \n");
+  printf("                                        +yyhhohhhyyoooooo++/:-oyhhhhhyy.        \n");
+  printf("                            `.-:/++oosssyyhhh`/hhhyyhhhhhhhhhyyyhhhhhhy+        \n");
+  printf("                        -osyyyhhhhhhhhhhhhhh+  shhhyyyhhhhhhhhhhhhhhhhyy        \n");
+  printf("                         `/yyyhhhhhhhhhhhhhh`  -hhhhhhhhhhhhhhhhhhhhhhyy        \n");
+  printf("                    .-/+syyyyyhhhhhhhhhhhhh:    yhhhhhhhhhhhhhhhhhhhhhys        \n");
+  printf("               `-/oyyyyhhhhhhhhhhhhhhhhhhho/.`/`ohhhhhhhhhhhhhhhhhhhhhys        \n");
+  printf("            ./oyyyhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhyhhhhhyhhhhhhshhhhhhhhhy:       \n");
+  printf("         ./syyyhhhhhhhhhysoo+///:::::::::://++oyhhhhhhs//+osyo+yhhhhhhhyy`      \n");
+  printf("      `:syyyhhhhhhhhysooooooo+/::::---...:/osyhhhhhhhhhh+/oso+:/hhhhhhhhy+      \n");
+  printf("    `/yyyyhhhhhhhhhhhhhhys+/:-..`    `/yhhhhhhhhhhhyyyhhh//hhhy/+yhhhhhhyy      \n");
+  printf("   :oooyyyyhhhhhhhhhyo+:-.`    .--:::::/shhhhhyo+/+syhhhhhooyhhhyyhhhhhyy-      \n");
+  printf("     -syyhhhhhhhhs+/-......----.--:::+yhhhhs+::::oo++//::/+oyhy+/osyhhhyy:      \n");
+  printf("   .oyyhhhhhhhs+::::/++ooosssssssoo+shhhhs//::::::::/+ossoss+/:::/oyhhhhhy+.    \n");
+  printf("  /yyyyyhhhysoosyhhhhhhhhhhhhhhhhhhhhhhhhhho::::::+yhhhhy:/syss::::osyhhhhyy+-  \n");
+  printf("`oyoyyyhhhhhhhhhhyyyyyysssooossyyhhhhhhhhy//++:::/yyyo/yyyyhy-sy/::::oshhhhhhys:\n");
+  printf(":-`oyyhhhhhyyyso+:-.`    `.-. :yyhhhhhhhhhhy+:::::::::+oy++hhhh/y+::::/yyhhhhhyy\n");
+  printf("  oyyhhyys+:.`            `.``yyyyyyyhhhhy+::://++//:::::/so-hhsyhy+::/soohhhhy/\n");
+  printf(" +yyys/-`                    oys+/yyhhhyo+oyhhhhhhhhhyo+:::+ys+hho.+hooo+yhhyy: \n");
+  printf("`y+-`                       `-`  +yhhhhyhhhhhhyyyyyhhhhhyo:::+sh+:osh+yoyhyo-   \n");
+  printf("`                               /yyhhhhyso+/::----:/+syyhhy/:::+so:oo:yhyy/     \n");
+  printf("                               :yyyo/-.               `+yhhho/::::/+yhhyy.      \n");
+  printf("                              -s/-                      .+yyhhhsssshhhys-       \n");
+  printf("                              `                           `:oyyhhhhyyo:         \n");
+  printf("                                                             `.-:::.`           \n");
+  printf("\n");
+}
+
 void replaceCommand(char *cmd, Command *command, char* wd, char *prompt){
   // Erase the line
   printf("\r\033[K");

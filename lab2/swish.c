@@ -46,8 +46,8 @@ int main(int argc, char ** argv, char **envp) {
 
     //Read History
     if(!readingScript) {
-
         historyFile = openHistoryFile("r");
+        if(historyFile == NULL && debug) printf("---------------THE FILE WAS NULL\n");
         
         for (int i = 0; i < MAX_HISTORY; ++i) {
             historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
@@ -130,7 +130,8 @@ int main(int argc, char ** argv, char **envp) {
     //Write historyList to the history file.
     if(!readingScript) {
         if (debug){ printf("%sABOUT TO OPEN HISTORY FILE%s\n", CYAN, NONE);}        
-        historyFile = openHistoryFile("w");        
+        historyFile = openHistoryFile("w");     
+        if(historyFile == NULL) printf("---------------THE FILE WAS NULL\n");
         if (debug){ printf("%sOPENED HISTORY FILE%s\n", CYAN, NONE);}
         writeHistoryFile(historyFile, historyList);
         // fflush(historyFile);
@@ -199,7 +200,9 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
             for (int i = 0; i < MAX_HISTORY && *historyList[i] != '\0'; ++i) {
                 printf("%3d: %s\n", i, historyList[i]);
             }
-        } else {
+        } else if(!strcmp(arguments[0], "wolf")){
+            printWolf();
+        }else {
             spawn(arguments);
         }
 		if (debug) {

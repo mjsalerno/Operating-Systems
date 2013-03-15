@@ -200,7 +200,7 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
             for (int i = 0; i < MAX_HISTORY && *historyList[i] != '\0'; ++i) {
                 printf("%3d: %s\n", i, historyList[i]);
             }
-        } else if(!strcmp(arguments[0], "wolf")){
+        } else if(!strcmp(arguments[0], "wolfie")){
             printWolf();
         }else {
             spawn(arguments);

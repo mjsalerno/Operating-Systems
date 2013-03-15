@@ -38,31 +38,6 @@ void removeNewline(char *string) {
     if (*string == '\r' || *string == '\n') {
       *string = '\0';
     }
-
-  }
-}
-
-/**
- * Since the name of the program is always in args[0], use args[0] to execute the program.
- */
-void spawn(char **args, REDIRECT_TYPE *redirects, int redirectIndex, bool two){
-  pid_t pid;
-  int status;
-  // Fork
-  if((pid = fork()) < 0){
-  	printError("Unable to fork child process.\n");
-  }
-  // If the fork was successful attempt to execute the program.   
-  else if(pid == 0){
-  	/* This is now in the child */
-  	// Execute
-  	if(execvp(args[0], args) < 0){
-      fprintf(stderr, "%sAn error occured while trying to start '%s'%s\n", RED, args[0], NONE);
-      exit(1);
-    }
-  }else{
-    /* This is the parent*/
-    while(wait(&status) != pid);
   }
 }
 
@@ -100,3 +75,110 @@ void printError(char *msg){
 	fprintf(stderr, "%s%s%s\n", RED, msg, NONE);
 }
 
+/**
+ * Since the name of the program is always in args[0], use args[0] to execute the program.
+ */
+void spawn(char **args){
+  pid_t pid;
+  int status;
+  // Check pid error code
+  if((pid = fork()) < 0){
+    printError("Unable to fork child process.\n");
+  }
+  // If the fork was successful attempt to execute the program.   
+  else if(pid == 0){
+      /* This is now in the child */
+      if(execvp(args[0], args) < 0){
+          fprintf(stderr, "%sAn error occured while trying to start '%s'%s\n", RED, args[0], NONE);
+          exit(1);
+      }    
+  }else{
+      /* This is the parent*/
+      while(wait(&status) != pid); 
+  }
+}
+
+void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize){
+  pid_t pid;
+  int status;
+  char *args[MAX_ARGS];
+  // Check pid error code
+  if((pid = fork()) < 0){
+    printError("Unable to fork child process.\n");
+  }
+  // If the fork was successful attempt to execute the program.   
+  else if(pid == 0){
+      /* This is now in the child */
+      for(int i = 0; i < cmdSize; i+= 2){
+        int fd[2];
+        pipe(fd);
+        int cid = fork();
+        if(cid > 0){
+          /* Execute the first process */
+          close(fd[READ_END]);
+          dup2(fd[WRITE_END], STDOUT_FILENO);
+          close(fd[WRITE_END]);
+          parseCommand(commands[i], args, MAX_ARGS);
+          printf("Executing p1 - %s\n", args[0]);
+          execvp(args[0], args);
+          exit(0);
+        }else if(i != (cmdSize -1)){
+          /* execute the second process */
+          close(fd[WRITE_END]);
+          dup2(fd[READ_END], STDIN_FILENO);
+          close(fd[READ_END]);
+          parseCommand(commands[i+1], args, MAX_ARGS);
+          printf("Executing p2 - %s\n", args[0]);
+          execvp(args[0], args);
+          exit(0);
+        }else{
+          while(wait(&status) != cid);    
+        }
+      }
+  }else{
+      /* This is the parent*/
+      while(wait(&status) != pid); 
+  } 
+}
+
+void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){
+    if(redirects[ri] != REDIRECT_NONE){
+        switch(redirects[ri]){
+            case PIPE:
+                printf("%sSetting up the pipe operator in the child.%s\n", MAGENTA, NONE);
+                
+                break;
+            case REDIRECT_LEFT:
+                printf("%sSetting up the redirect left operator in the child.%s\n", MAGENTA, NONE);
+                break;
+            case REDIRECT_RIGHT:
+                printf("%sSetting up the redirect right operator in the child.%s\n", MAGENTA, NONE);
+                break;
+            default:
+                printf("%sUnknown redirection operator in child '%d'%s\n", RED, redirects[ri], NONE);
+                break;
+        }
+    }else{
+        printf("%sNo redirection operator.%s\n", MAGENTA, NONE);
+    }
+}
+
+void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){
+    if(redirects[ri] != REDIRECT_NONE){
+        switch(redirects[ri]){
+            case PIPE:
+                printf("%sSetting up the pipe operator in the parent.%s\n", MAGENTA, NONE);
+                
+                break;
+            case REDIRECT_LEFT:
+                printf("%sSetting up the redirect left operator in the parent.%s\n", MAGENTA, NONE);
+                break;
+            case REDIRECT_RIGHT:
+                printf("%sSetting up the redirect right operator in the parent.%s\n", MAGENTA, NONE);
+                break;
+            default:
+                printf("%sUnknown redirection operator in parent'%d'%s\n", RED, redirects[ri], NONE);
+                break;
+        }
+    } 
+}

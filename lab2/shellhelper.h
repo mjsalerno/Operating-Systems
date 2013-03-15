@@ -15,6 +15,10 @@
 #define GRAY      "\033[1;37m"
 #define NONE      "\033[0m"           /* to flush the previous property */
 
+/* pipe constants */
+#define READ_END  0
+#define WRITE_END 1
+
 /**
  * Searchs the array containing the enviroment variables and looks for the provided keyword.
  * @param envp NULL terminated array of char* that contains all the enviroment variables.
@@ -27,7 +31,13 @@ char* parseEnv(char **envp, char *keyword);
  * Performs fork & exec using the arguments provided.
  * @param args NULL terminated array of char* that contains the argument(s) to the binary.
  */
-void spawn(char **args, REDIRECT_TYPE *redirects, int redirectIndex, bool two);
+void spawn(char **args);
+
+/**
+ * Performs the same fork and exec that spawn does but also connects the correct pipes depending
+ * on the redirection operators being used.
+ */
+void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize);
 
 /**
  * Parses a string a puts the results in the parsed array.
@@ -50,4 +60,7 @@ char** argsBuilder(char *filename, int num, ...);
 void printError(char *msg);
 
 void removeNewline(char *string);
+
+void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
+void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 #endif

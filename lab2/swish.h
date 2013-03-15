@@ -18,14 +18,15 @@ typedef enum REDIRECT_TYPE REDIRECT_TYPE;
 /**
  * Attemps to parse, and spawn a process based on the command.
  */
-void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int redirectIndex, bool two);
+void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int rdSize);
 
 void getInput(Command *command, char *prompt, char *wd);
 
 /**
  * Searchs the given string for redirection operators(PIPE_TYPE).
+ * @return Returns the number of redirects in the command.
  */
-void searchRedirect(char* cmd, REDIRECT_TYPE *redirects);
+int searchRedirect(char* cmd, REDIRECT_TYPE *redirects);
 
 void moveLeft(Command *command);
 void moveRight(Command *command);

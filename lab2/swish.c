@@ -18,6 +18,7 @@ int main(int argc, char ** argv, char **envp) {
     char cmdFromFile[MAX_INPUT];
     char *cp;
     setbuf(stdout, NULL);
+
     // Parse Args
     if (argc > 1) {
         if (!strcmp("-d", argv[1])) {
@@ -45,7 +46,6 @@ int main(int argc, char ** argv, char **envp) {
         char *cmd;
         int cmdsIndex = 0; 
         REDIRECT_TYPE redirects[MAX_INPUT];
-        bool two;
 
         if (!readingScript) {
             getcwd(wd, MAX_PATH);
@@ -59,16 +59,14 @@ int main(int argc, char ** argv, char **envp) {
             printf("\n"); // Print the newline that got consumed by the getch() loop   
         }
         // support redirection
-        searchRedirect(command.value, redirects);
+        int rdSize = searchRedirect(command.value, redirects);
         cmd = strtok(command.value, "<|>");        
         while(cmd){
             cmds[cmdsIndex++] = cmd;
             cmd = strtok(NULL, "<|>");
         }
-        two = (cmdsIndex == 2) ? true : false;
-        for(int i = 0; i < cmdsIndex; i++){
-            evaluateCommand(cmds[i], &running, wd, envp, script, &readingScript, debug, redirects, i, two);
-        }
+        // Evalue the user input
+        evaluateCommand(cmds, cmdsIndex, &running, wd, envp, script, &readingScript, debug, redirects, rdSize);
         // Reset Command
         resetCommand(&command);
         // Scripting Support
@@ -87,54 +85,63 @@ int main(int argc, char ** argv, char **envp) {
     return 0;
 }
 
-void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int redirectIndex, bool two) {
+void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int rdSize) {
     char *arguments[MAX_ARGS];
+    
+    // Something went wrong stop evaluating.
+    if(cmdSize <= 0){
+        return;
+    }
+    // Check to see how many commands we need to evaluate
+    if(!rdSize){
+        if (strlen(*cmd)) {
+            if (debug) {
+                printf("RUNNING:%s\n", *cmd);
+            }
+            parseCommand(*cmd, arguments, MAX_ARGS);
+            //if (debug)printf("RUNNING after parse:%s\n", cmd);
+            if (!strcmp(arguments[0], "exit")) {
+                *running = false;
 
-    if (strlen(cmd)) {
-        if (debug) {
-            printf("RUNNING:%s\n", cmd);
-        }
-        parseCommand(cmd, arguments, MAX_ARGS);
-        //if (debug)printf("RUNNING after parse:%s\n", cmd);
-        if (!strcmp(arguments[0], "exit")) {
-            *running = false;
+            } else if (!strcmp(arguments[0], "cd")) {
+                if (!strcmp(arguments[1], "-")) {
+                    chdir(getenv("OLDPWD"));
 
-        } else if (!strcmp(arguments[0], "cd")) {
-            if (!strcmp(arguments[1], "-")) {
-                chdir(getenv("OLDPWD"));
+                } else if (!strcmp(arguments[1], "~")) {
+                    setenv("OLDPWD", wd, 1);
+                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
+                    chdir(parseEnv(envp, "HOME"));
 
-            } else if (!strcmp(arguments[1], "~")) {
-                setenv("OLDPWD", wd, 1);
-                if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
-                chdir(parseEnv(envp, "HOME"));
+                } else {
+                    setenv("OLDPWD", wd, 1);
+                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
+                    int val = chdir(arguments[1]);
+                    if (val) printf("Sorry but %s does not exist\n", arguments[1]);
+                }
+
+            } else if (!strcmp(arguments[0], "set")) {
+                setenv(arguments[1], arguments[3], 1);
+                printf("envset: %s\n", getenv(arguments[1]));
+
+            } else if (!strcmp(arguments[0], "echo")) { //TODO: get this working for $ not in the first arg
+                char *cp = strchr(arguments[1], '$');
+                if (cp != NULL) {
+                    cp++;
+                    printf("%s = %s\n", cp, getenv(cp));
+                } else {
+                    spawn(arguments);
+                }
 
             } else {
-                setenv("OLDPWD", wd, 1);
-                if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
-                int val = chdir(arguments[1]);
-                if (val) printf("Sorry but %s does not exist\n", arguments[1]);
+                spawn(arguments);
             }
 
-        } else if (!strcmp(arguments[0], "set")) {
-            setenv(arguments[1], arguments[3], 1);
-            printf("envset: %s\n", getenv(arguments[1]));
-
-        } else if (!strcmp(arguments[0], "echo")) { //TODO: get this working for $ not in the first arg
-            char *cp = strchr(arguments[1], '$');
-            if (cp != NULL) {
-                cp++;
-                printf("%s = %s\n", cp, getenv(cp));
-            } else {
-                spawn(arguments, redirects, redirectIndex, two);
+            if (debug) {
+                printf("ENDED: %s (needs return val)\n", *cmd);
             }
-
-        } else {
-            spawn(arguments, redirects, redirectIndex, two);
         }
-
-        if (debug) {
-            printf("ENDED: %s (needs return val)\n", cmd);
-        }
+    } else {
+        spawnRedirect(cmd, cmdSize, redirects, rdSize);
     }
 
 }
@@ -171,13 +178,12 @@ void getInput(Command *command, char *prompt, char *wd) {
             addCommand(command, (char) ch);
             printf("%c", (char) ch);
         } else {
-
             printf("Special Key: %d\n", ch);
         }
     }
 }
 
-void searchRedirect(char* cmd, REDIRECT_TYPE *redirects){
+int searchRedirect(char* cmd, REDIRECT_TYPE *redirects){
     int count = 0;
     for(int i = 0; i < strlen(cmd); i++){
         switch(cmd[i]){
@@ -192,7 +198,9 @@ void searchRedirect(char* cmd, REDIRECT_TYPE *redirects){
                 break;
         }
     }
+    printf("There is %d redirect(s)\n", count);
     redirects[count] = REDIRECT_NONE;
+    return count;
 }
 
 void moveLeft(Command *command) {

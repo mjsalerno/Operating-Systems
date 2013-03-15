@@ -100,29 +100,6 @@ void replaceCommand(char *cmd, Command *command, char* wd, char *prompt){
   printf("%s[%s] %s%s%s%s", BLUE, wd, GREEN, prompt, NONE, command->value);
 }
 
-/**
- * Since the name of the program is always in args[0], use args[0] to execute the program.
- */
-void spawn(char **args){
-  pid_t pid;
-  int status;
-  // Fork
-  if((pid = fork()) < 0){
-  	printError("Unable to fork child process.\n");
-  }
-  // If the fork was successful attempt to execute the program.   
-  else if(pid == 0){
-  	/* This is now in the child */
-  	// Execute
-  	if(execvp(args[0], args) < 0){
-      fprintf(stderr, "%sAn error occured while trying to start '%s'%s\n", RED, args[0], NONE);
-      exit(1);
-    }
-  }else{
-    /* This is the parent*/
-    while(wait(&status) != pid);
-  }
-}
 
 void parseCommand(char *command, char** parsed, int size){
   int i = 0;

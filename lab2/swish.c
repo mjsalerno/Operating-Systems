@@ -104,7 +104,7 @@ int main(int argc, char ** argv, char **envp) {
             cmd = strtok(NULL, "<|>");
         }
         // Evalue the user input
-        evaluateCommand(cmds, cmdsIndex, &running, wd, envp, script, &readingScript, debug, redirects, rdSize);
+        evaluateCommand(cmds, cmdsIndex, &running, wd, envp, script, &readingScript, debug, historyList, redirects, rdSize);
         // Reset Command
         resetCommand(&command);
         // Scripting Support
@@ -153,7 +153,7 @@ int main(int argc, char ** argv, char **envp) {
     return 0;
 }
 
-void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize) {
+void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize) {
     char *arguments[MAX_ARGS];
 
     // Something went wrong stop evaluating.
@@ -211,7 +211,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
             spawn(arguments);
         }
 		if (debug) {
-            printf("ENDED: %s (needs return val)\n", cmd);
+            printf("ENDED: %s (needs return val)\n", *cmd);
 		}
         }
     } else {
@@ -220,7 +220,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
 
     }
 
-}
+
 
 void getInput(Command *command, char *prompt, char *wd, int historyShown, char *historyList[]) {
     int ch;

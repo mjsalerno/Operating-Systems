@@ -20,7 +20,7 @@ typedef enum REDIRECT_TYPE REDIRECT_TYPE;
 /**
  * Attemps to parse, and spawn a process based on the command.
  */
-void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize);
+void evaluateCommand(char **cmd, int cmdIndex, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize);
 
 
 void getInput(Command *command, char *prompt, char *wd, int historyPtr, char *historyList[]);

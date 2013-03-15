@@ -46,7 +46,8 @@ int main(int argc, char ** argv, char **envp) {
 
     //Read History
     if(!readingScript) {
-        historyFile = fopen(HISTORY_FILE_NAME, "r");
+
+        historyFile = openHistoryFile("r");
         
         for (int i = 0; i < MAX_HISTORY; ++i) {
             historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
@@ -128,21 +129,12 @@ int main(int argc, char ** argv, char **envp) {
 
     //Write historyList to the history file.
     if(!readingScript) {
-        if (debug){ printf("%sABOUT TO OPEN HISTORY FILE%s\n", CYAN, NONE);}
-        printf("History: '%s'\n", HISTORY_FILE_NAME);
-        printf("Before fopen\n");
-        historyFile = fopen(HISTORY_FILE_NAME, "w");
-        printf("After fopen\n");        
-        if(historyFile == NULL){
-            printf("%sHistory file is NULL%s", RED, NONE);
-        }
+        if (debug){ printf("%sABOUT TO OPEN HISTORY FILE%s\n", CYAN, NONE);}        
+        historyFile = openHistoryFile("w");        
         if (debug){ printf("%sOPENED HISTORY FILE%s\n", CYAN, NONE);}
         writeHistoryFile(historyFile, historyList);
-        printf("Before flush\n");
-        fflush(historyFile);
-        printf("After flush\n");
-        fclose(historyFile);
-        printf("After fclose\n");
+        // fflush(historyFile);
+        // fclose(historyFile);
         /*
         for (int i = 0; i < MAX_HISTORY; ++i) {
             free(historyList[i]);

@@ -92,6 +92,16 @@ void writeHistoryFile(FILE *historyFile, char *historyList[]) {
   }
 }
 
+FILE* openHistoryFile(char *rights) {
+  char path[MAX_PATH] = {'\0'};
+  strcpy(path, getenv("HOME"));
+  strcat(path, "/");        
+  strcat(path, HISTORY_FILE_NAME); 
+  //printf("NEW PATH: %s\n", path);
+
+  return fopen(path, rights);
+}
+
 void replaceCommand(char *cmd, Command *command, char* wd, char *prompt){
   // Erase the line
   printf("\r\033[K");

@@ -70,4 +70,5 @@ void historyUp(int *historyPtr);
 void historyShowDn(int *historyShow, char *historyList[]);
 void historyShowUp(int *historyShow, char *historyList[]);
 void replaceCommand(char *cmd, Command *command, char* wd, char *prompt);
+FILE* openHistoryFile(char *rights);
 #endif

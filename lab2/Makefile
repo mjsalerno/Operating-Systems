@@ -1,4 +1,4 @@
-CC    = clang
+CC    = gcc
 CLANG = clang
 FLAGS = -Wall -Werror -std=c99 -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200112L
 SWISH = swish 

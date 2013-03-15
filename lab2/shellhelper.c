@@ -101,8 +101,57 @@ void spawn(char **args){
 
 void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize)
 {
-  int pipefd[2 * rdsize];
-  
+  int pipefd[2 * rdSize];
+  char *args[MAX_ARGS];
+
+  // Create pipes
+  for(int i = 0; i < rdSize; i++) {
+    if(pipe(pipefd + (i*2)) < 0) {
+      printError("An error occurred while trying to create pipes.\n");
+      exit(1);
+    }
+  }
+  // Set up variables for forking
+  int pid, status;
+  // Start spawning children
+  for(int i = 0, j = 0; i < cmdSize; i++, j+=2) {
+    // Get command to spawn
+    parseCommand(commands[i], args, MAX_ARGS);
+    printf("%sExecuting c2 - %s%s\n", MAGENTA, args[0], NONE);
+    // Begin forking
+    if((pid = fork()) == 0) {
+      if(i < cmdSize - 1) {
+        if(dup2(pipefd[j + 1], STDOUT_FILENO) < 0) {
+          printError("An error occurred while trying to use dup2.\n");
+          exit(1);
+        }
+      }
+      // Copy pipes
+      if(j > 0) {
+        if((dup2(pipefd[j - 2], STDIN_FILENO)) < 0) {
+          printError("An error occurred while trying to use dup2.\n");
+          exit(1);
+        }
+      }
+      // close unused pipes
+      for(int i = 0; i < 2 * rdSize; i++) {
+        close(pipefd[i]);
+      }
+      // Start Child process
+      if(execvp(args[0], args) < 0) {
+        printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
+        exit(1);
+      }
+    }
+  }
+
+  // Close Parent pipes
+  for(int i = 0; i < 2 * rdSize; i++) {
+        close(pipefd[i]);
+  }
+  // Wait for children
+  printf("%sParent is waiting%s\n", MAGENTA, NONE);
+  while(wait(&status) != pid); 
 }
 
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){

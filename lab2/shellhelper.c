@@ -60,6 +60,26 @@ void historyUp(int *historyPtr) {
   }
 }
 
+void historyShowDn(int *historyShow, char *historyList[]) {
+  if(*historyShow >= (MAX_HISTORY - 1) && *historyList[0] != '\0') {
+    *historyShow = 0;
+  } else if(*historyList[(*historyShow) + 1] != '\0') {
+      (*historyShow)++;
+  }
+
+  // printf("historyShow: %d\n", *historyShow);
+}
+
+void historyShowUp(int *historyShow, char *historyList[]) {
+ if(*historyShow <= 0 && *historyList[MAX_HISTORY - 1] != '\0') {
+    *historyShow = MAX_HISTORY - 1;
+  } else if( *historyShow >= 1 && *historyList[*historyShow - 1] != '\0'){
+      (*historyShow)--;
+  } 
+
+  // printf("historyShow: %d\n", *historyShow);
+}
+
 void writeHistoryFile(FILE *historyFile, char *historyList[]) {
   for (int i = 0; i < MAX_HISTORY; ++i) {
     if (*historyList[i] != '\0') {

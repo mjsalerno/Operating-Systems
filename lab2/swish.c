@@ -20,6 +20,7 @@ int main(int argc, char ** argv, char **envp) {
     FILE *historyFile;
     char *historyList[MAX_HISTORY];
     int historyPtr = 0;
+    int historyShown = 0;
     setbuf(stdout, NULL);
 
     // Parse Args
@@ -63,6 +64,7 @@ int main(int argc, char ** argv, char **envp) {
                 // }
             }
             historyPtr = i;
+            historyShown = i;
         
     }
 
@@ -78,7 +80,7 @@ int main(int argc, char ** argv, char **envp) {
             getcwd(wd, MAX_PATH);
             printf("%s[%s]%s %s%s", BLUE, wd, GREEN, prompt, NONE);
             // Get input from keyboard
-            getInput(&command, prompt, wd, historyPtr, historyList);
+            getInput(&command, prompt, wd, historyShown, historyList);
             // Adjust pointer to correct spot.
             command.index = command.size;
             // Give the current command a null
@@ -91,6 +93,7 @@ int main(int argc, char ** argv, char **envp) {
             }
             
             historyDn(&historyPtr);
+            historyShown = historyPtr;
             // historyPtr++;
         }
         // support redirection
@@ -140,7 +143,7 @@ int main(int argc, char ** argv, char **envp) {
     return 0;
 }
 
-void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, REDIRECT_TYPE *redirects, int rdSize) {
+void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize) {
     char *arguments[MAX_ARGS];
 
     // Something went wrong stop evaluating.
@@ -189,6 +192,10 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
                 spawn(arguments);
             }
 
+        } else if(!strcmp(arguments[0], "history")) {
+            for (int i = 0; *historyList[i] != '\0'; ++i) {
+                printf("%3d: %s\n", i, historyList[i]);
+            }
         } else {
             spawn(arguments);
         }
@@ -205,7 +212,7 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
 
 }
 
-void getInput(Command *command, char *prompt, char *wd, int historyPtr, char *historyList[]) {
+void getInput(Command *command, char *prompt, char *wd, int historyShown, char *historyList[]) {
     int ch;
     while ((ch = fgetc(stdin)) != '\n') {
         // Handle Arrow Keys
@@ -217,13 +224,13 @@ void getInput(Command *command, char *prompt, char *wd, int historyPtr, char *hi
                     switch (ch = fgetc(stdin)) {
                         case 'A':
                             // printf("Up Arrow was pressed\n");
-                            historyUp(&historyPtr);
-                            replaceCommand(historyList[historyPtr], command, wd, prompt);
+                            historyShowUp(&historyShown, historyList);
+                            replaceCommand(historyList[historyShown], command, wd, prompt);
                             break;
                         case 'B':
                             // printf("Down Arrow was pressed\n");
-                            historyDn(&historyPtr);
-                            replaceCommand(historyList[historyPtr], command, wd, prompt);
+                            historyShowDn(&historyShown, historyList);
+                            replaceCommand(historyList[historyShown], command, wd, prompt);
                             break;
                         case 'C':
                             moveRight(command);

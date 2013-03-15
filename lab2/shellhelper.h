@@ -67,5 +67,7 @@ void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 int contains(char *array[], char key);
 void historyDn(int *historyPtr);
 void historyUp(int *historyPtr);
+void historyShowDn(int *historyShow, char *historyList[]);
+void historyShowUp(int *historyShow, char *historyList[]);
 void replaceCommand(char *cmd, Command *command, char* wd, char *prompt);
 #endif

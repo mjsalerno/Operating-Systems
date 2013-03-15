@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "shellhelper.h"
@@ -100,61 +101,8 @@ void spawn(char **args){
 
 void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize)
 {
-  pid_t pid;
-  int status;
-  char *args[MAX_ARGS];
-  // Check pid error code
-  if((pid = fork()) < 0)
-  {
-    printError("Unable to fork child process.\n");
-  }
-  // If the fork was successful attempt to execute the program.   
-  else if(pid == 0)
-  {
-    pid_t cid;
-    int /*cstatus,*/ pipefd[2 * rdSize];
-    // create pipes
-    pipe(pipefd);
-    // Begin piping children
-    for(int i = 0; i < cmdSize; i+= 2)
-    {
-      printf("%sIndex %d%s\n", CYAN, i, NONE);
-      printf("%scmdSize - 1: %d%s\n", CYAN, cmdSize - 1, NONE);
-      if((cid = fork()) < 0)
-      {
-        printf("%sUnable to fork for child %d%s\n", RED, i, NONE);
-      }
-      else if(cid > 0)
-      {
-        parseCommand(commands[i+1], args, MAX_ARGS);
-        printf("%sExecuting p2 - %s%s\n", MAGENTA, args[0], NONE);
-        /* execute the second process */
-        close(pipefd[i + WRITE_END]);
-        dup2(pipefd[i + READ_END], STDIN_FILENO);
-        close(pipefd[i + READ_END]);
-        execvp(args[0], args);
-        exit(0);
-      }
-      else
-      {
-        parseCommand(commands[i], args, MAX_ARGS);
-        printf("%sExecuting p1 - %s%s\n", MAGENTA, args[0], NONE);
-        // Set up Pipes
-        close(pipefd[i + READ_END]);
-        dup2(pipefd[i + WRITE_END], STDOUT_FILENO);
-        close(pipefd[i + WRITE_END]);
-        // Execute program
-        execvp(args[0], args);
-        exit(0);
-      }
-    }
-  }
-  else
-  {
-      /* This is the parent*/
-      printf("%sParent waiting.%s\n", MAGENTA, NONE);
-      while(wait(&status) != pid); 
-  } 
+  int pipefd[2 * rdsize];
+  
 }
 
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){

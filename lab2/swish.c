@@ -198,7 +198,7 @@ int searchRedirect(char* cmd, REDIRECT_TYPE *redirects){
                 break;
         }
     }
-    printf("There is %d redirect(s)\n", count);
+    //printf("There is %d redirect(s)\n", count);
     redirects[count] = REDIRECT_NONE;
     return count;
 }

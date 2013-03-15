@@ -48,23 +48,23 @@ int main(int argc, char ** argv, char **envp) {
     if(!readingScript) {
         historyFile = fopen(HISTORY_FILE_NAME, "r");
         
-            for (int i = 0; i < MAX_HISTORY; ++i) {
-                historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
-                *historyList[i] = '\0';
-            }
+        for (int i = 0; i < MAX_HISTORY; ++i) {
+            historyList[i] = (char *) malloc(sizeof(char) * MAX_INPUT);
+            *historyList[i] = '\0';
+        }
 
-            int i = 0;
-            if (historyFile != NULL) {
-                for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i){
-                    removeNewline(historyList[i]);
-                }
-                fclose(historyFile);
-                // for (int i = 0; i < 10; ++i){
-                //    printf("HISTORY %d:%s\n", i, historyList[i]);
-                // }
+        int i = 0;
+        if (historyFile != NULL) {
+            for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i){
+                removeNewline(historyList[i]);
             }
-            historyPtr = i;
-            historyShown = i;
+            fclose(historyFile);
+            // for (int i = 0; i < 10; ++i){
+            //    printf("HISTORY %d:%s\n", i, historyList[i]);
+            // }
+        }
+        historyPtr = i;
+        historyShown = i;
         
     }
 
@@ -128,17 +128,27 @@ int main(int argc, char ** argv, char **envp) {
 
     //Write historyList to the history file.
     if(!readingScript) {
-        if (debug) printf("ABOUT TO OPEN HISTORY FILE\n");
-        historyFile = fopen(HISTORY_FILE_NAME, "w");        
-        if (debug) printf("OPENED HISTORY FILE\n");
+        if (debug){ printf("%sABOUT TO OPEN HISTORY FILE%s\n", CYAN, NONE);}
+        printf("History: '%s'\n", HISTORY_FILE_NAME);
+        printf("Before fopen\n");
+        historyFile = fopen(HISTORY_FILE_NAME, "w");
+        printf("After fopen\n");        
+        if(historyFile == NULL){
+            printf("%sHistory file is NULL%s", RED, NONE);
+        }
+        if (debug){ printf("%sOPENED HISTORY FILE%s\n", CYAN, NONE);}
         writeHistoryFile(historyFile, historyList);
+        printf("Before flush\n");
+        fflush(historyFile);
+        printf("After flush\n");
         fclose(historyFile);
-
+        printf("After fclose\n");
+        /*
         for (int i = 0; i < MAX_HISTORY; ++i) {
             free(historyList[i]);
         }
+        */
     }
-
 
     return 0;
 }
@@ -161,21 +171,22 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
             if (!strcmp(arguments[0], "exit")) {
                 *running = false;
 
-            } else if (!strcmp(arguments[0], "cd")) {
-                if (!strcmp(arguments[1], "-")) {
-                    chdir(getenv("OLDPWD"));
+        } else if (!strcmp(arguments[0], "cd")) {
+            
 
-                } else if (!strcmp(arguments[1], "~")) {
-                    setenv("OLDPWD", wd, 1);
-                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
-                    chdir(parseEnv(envp, "HOME"));
+            if (arguments[1] == NULL || !strcmp(arguments[1], "~")) {
+                setenv("OLDPWD", wd, 1);
+                if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
+                chdir(parseEnv(envp, "HOME"));
 
-                } else {
-                    setenv("OLDPWD", wd, 1);
-                    if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
-                    int val = chdir(arguments[1]);
-                    if (val) printf("Sorry but %s does not exist\n", arguments[1]);
-                }
+            } else if (!strcmp(arguments[1], "-")) {
+                chdir(getenv("OLDPWD"));
+            } else {
+                setenv("OLDPWD", wd, 1);
+                if (debug) printf("oldpwd: %s\n", getenv("OLDPWD"));
+                int val = chdir(arguments[1]);
+                if (val) printf("Sorry but %s does not exist\n", arguments[1]);
+            }
 
         } else if (!strcmp(arguments[0], "set")) {
             setenv(arguments[1], arguments[3], 1);
@@ -193,7 +204,7 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
             }
 
         } else if(!strcmp(arguments[0], "history")) {
-            for (int i = 0; *historyList[i] != '\0'; ++i) {
+            for (int i = 0; i < MAX_HISTORY && *historyList[i] != '\0'; ++i) {
                 printf("%3d: %s\n", i, historyList[i]);
             }
         } else {
@@ -207,7 +218,6 @@ void evaluateCommand(char *cmd, bool *running, char* wd, char** envp, FILE *scri
         spawnRedirect(cmd, cmdSize, redirects, rdSize);
     }
 
-        
     }
 
 }

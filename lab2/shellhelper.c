@@ -81,9 +81,13 @@ void historyShowUp(int *historyShow, char *historyList[]) {
 }
 
 void writeHistoryFile(FILE *historyFile, char *historyList[]) {
+  if (historyFile == NULL)
+    printf("-------------------------THE FILE IS NULL\n");
+  
   for (int i = 0; i < MAX_HISTORY; ++i) {
     if (*historyList[i] != '\0') {
       fprintf(historyFile, "%s\n", historyList[i]);
+      printf("WROTE: %s\n", historyList[i]);
     }
   }
 }

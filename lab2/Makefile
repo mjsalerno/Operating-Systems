@@ -12,5 +12,10 @@ shellhelper.o: shellhelper.c shellhelper.h
 command.o: command.c command.h
 	$(CC) $(FLAGS) -c command.c
 
+handin:	clean
+	@if [ `git status --porcelain| wc -l` != 0 ] ; then echo "\n\n\n\n\t\tWARNING: YOU HAVE UNCOMMITTED CHANGES\n\n    Consider committing any pending changes and rerunning make handin.\n\n\n\n"; fi
+	@git tag -f -a lab2-handin -m "Lab2 Handin"
+	@git push --tags handin
+
 clean:
 	rm *.o $(SWISH)

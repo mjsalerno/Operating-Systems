@@ -1,7 +1,7 @@
 #ifndef SHELLHELPER_H
 #define SHELLHELPER_H
-#include "command.h"
 #include <stdbool.h>
+#include "command.h"
 #include "swish.h"
 
 /* Cheat Sheet for printing out colors, and special things in the terminal */
@@ -63,6 +63,8 @@ void printError(char *msg);
 void removeNewline(char *string);
 
 void setPipes(char** args, int i, int j, int cmdSize, int rdSize, int *pipefd);
+
+void setLeftRedirect(char **cmd1, char **cmd2, int *pipefd, int i, int j, int cmdSize, int rdSize);
 
 int contains(char *array[], char key);
 void historyDn(int *historyPtr);

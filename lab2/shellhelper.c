@@ -213,6 +213,7 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
 {
   int pipefd[2 * rdSize]/*, fd*/;
   char *args[MAX_ARGS];
+  char *cmd2[MAX_ARGS];
 
   // Create pipes
   for(int i = 0; i < rdSize; i++) {
@@ -230,11 +231,27 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
     printf("%sExecuting c%d - %s%s\n", MAGENTA, i, args[0], NONE);
     // Begin forking
     if((pid = fork()) == 0) {
-      setPipes(args, i, j, cmdSize, rdSize, pipefd);
-      // Start Child process
-      if(execvp(args[0], args) < 0) {
-        printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
-        exit(1);
+      if(i < rdSize){
+        switch(redirects[i])
+        {
+          case PIPE:
+            printf("Setting pipes\n");
+            setPipes(args, i, j, cmdSize, rdSize, pipefd);
+            break;
+          case REDIRECT_LEFT:
+            printf("Setting redirect left\n");
+            parseCommand(commands[i+1], cmd2, MAX_ARGS);
+            setLeftRedirect(args, cmd2, pipefd, i, j, cmdSize, rdSize);
+            i++;
+            break;
+          case REDIRECT_RIGHT:
+            break;
+          default:
+            printError("Undefined redirection operator.");
+            break;
+        }
+      } else {
+        setPipes(args, i, j, cmdSize, rdSize, pipefd);
       }
     }
   }
@@ -265,4 +282,28 @@ void setPipes(char **args, int i, int j, int cmdSize, int rdSize, int *pipefd){
   for(int i = 0; i < 2 * rdSize; i++) {
     close(pipefd[i]);
   }
+  // Start Child process
+  if(execvp(args[0], args) < 0) {
+    printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
+    exit(1);
+  }
+}
+
+void setLeftRedirect(char **cmd1, char **cmd2, int *pipefd, int i, int j, int cmdSize, int rdSize){
+  pipefd[j + 1] = open(cmd2[0], O_RDONLY);
+  if(i < cmdSize - 1) {
+    if(dup2(pipefd[j + 1], STDIN_FILENO) < 0) {
+      printError("An error occurred while trying to use dup2.\n");
+      exit(1);
+    }
+  }
+  // close unused pipes
+  for(int i = 0; i < 2 * rdSize; i++) {
+    close(pipefd[i]);
+  }
+  // Start Child process
+  if(execvp(cmd1[0], cmd1) < 0) {
+    printf("%sUnable to start the process '%s'%s\n", RED, cmd1[0], NONE);
+    exit(1);
+  } 
 }

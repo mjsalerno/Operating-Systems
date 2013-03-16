@@ -260,6 +260,8 @@ void getInput(Command *command, char *prompt, char *wd, int historyShown, char *
         } else if (ch >= 32 && ch <= 126) {
             addCommand(command, (char) ch);
             printf("%c", (char) ch);
+        } else if(ch == '\t'){
+            // consume tab for now
         } else {
             printf("Special Key: %d\n", ch);
         }

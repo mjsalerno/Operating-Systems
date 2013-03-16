@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "shellhelper.h"
@@ -230,6 +231,14 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
     // Begin forking
     if((pid = fork()) == 0) {
       setPipes(args, i, j, cmdSize, rdSize, pipefd);
+      // Start Child process
+      if(execvp(args[0], args) < 0) {
+        printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
+        // Try as file instead
+        close(pipefd[i + STDOUT_FILENO]);
+        open(args[0], 'w');
+        exit(1);
+      }
     }
   }
   // Close Parent pipes
@@ -258,10 +267,5 @@ void setPipes(char **args, int i, int j, int cmdSize, int rdSize, int *pipefd){
   // close unused pipes
   for(int i = 0; i < 2 * rdSize; i++) {
     close(pipefd[i]);
-  }
-  // Start Child process
-  if(execvp(args[0], args) < 0) {
-    printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
-    exit(1);
   }
 }

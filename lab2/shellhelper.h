@@ -62,7 +62,7 @@ void printError(char *msg);
 
 void removeNewline(char *string);
 
-void setPipes(int i, int j, int cmdSize, int rdSize, int *fd);
+void setPipes(char** args, int i, int j, int cmdSize, int rdSize, int *pipefd);
 
 void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);

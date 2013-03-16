@@ -210,7 +210,7 @@ void spawn(char **args){
 
 void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize)
 {
-  int pipefd[2 * rdSize, fd;
+  int pipefd[2 * rdSize]/*, fd*/;
   char *args[MAX_ARGS];
 
   // Create pipes
@@ -229,31 +229,9 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
     printf("%sExecuting c%d - %s%s\n", MAGENTA, i, args[0], NONE);
     // Begin forking
     if((pid = fork()) == 0) {
-      if(i < cmdSize - 1) {
-        if(dup2(pipefd[j + 1], STDOUT_FILENO) < 0) {
-          printError("An error occurred while trying to use dup2.\n");
-          exit(1);
-        }
-      }
-      // Copy pipes
-      if(j > 0) {
-        if((dup2(pipefd[j - 2], STDIN_FILENO)) < 0) {
-          printError("An error occurred while trying to use dup2.\n");
-          exit(1);
-        }
-      }
-      // close unused pipes
-      for(int i = 0; i < 2 * rdSize; i++) {
-        close(pipefd[i]);
-      }
-      // Start Child process
-      if(execvp(args[0], args) < 0) {
-        printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
-        exit(1);
-      }
+      setPipes(args, i, j, cmdSize, rdSize, pipefd);
     }
   }
-
   // Close Parent pipes
   for(int i = 0; i < 2 * rdSize; i++) {
         close(pipefd[i]);
@@ -263,8 +241,29 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
   while(wait(&status) != pid); 
 }
 
-void setPipes(int i, int j, int cmdSize, int rdSize, int *fd){
-
+void setPipes(char **args, int i, int j, int cmdSize, int rdSize, int *pipefd){
+  if(i < cmdSize - 1) {
+    if(dup2(pipefd[j + 1], STDOUT_FILENO) < 0) {
+      printError("An error occurred while trying to use dup2.\n");
+      exit(1);
+    }
+  }
+  // Copy pipes
+  if(j > 0) {
+    if((dup2(pipefd[j - 2], STDIN_FILENO)) < 0) {
+      printError("An error occurred while trying to use dup2.\n");
+      exit(1);
+    }
+  }
+  // close unused pipes
+  for(int i = 0; i < 2 * rdSize; i++) {
+    close(pipefd[i]);
+  }
+  // Start Child process
+  if(execvp(args[0], args) < 0) {
+    printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
+    exit(1);
+  }
 }
 
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){

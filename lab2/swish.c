@@ -8,6 +8,7 @@
 #include "shellhelper.h"
 
 int main(int argc, char ** argv, char **envp) {
+
     bool running = true;
     bool debug = false;
     bool readingScript = false;
@@ -61,9 +62,6 @@ int main(int argc, char ** argv, char **envp) {
             }
             i--;
             fclose(historyFile);
-            // for (int i = 0; i < 10; ++i){
-            //    printf("HISTORY %d:%s\n", i, historyList[i]);
-            // }
         }
         historyPtr = i;
         historyShown = i;
@@ -124,26 +122,14 @@ int main(int argc, char ** argv, char **envp) {
         }
     }
 
-    // for (int i = 0; i < 10; ++i){
-    //     printf("HISTORY %d:%s\n", i, historyList[i]);
-    // }
-
     //Write historyList to the history file.
     if(!readingScript) {
         if (debug){ printf("%sABOUT TO OPEN HISTORY FILE%s\n", CYAN, NONE);}        
         historyFile = openHistoryFile("w");     
         if(historyFile == NULL) printf("---------------THE FILE WAS NULL\n");
         if (debug){ printf("%sOPENED HISTORY FILE%s\n", CYAN, NONE);}
-        writeHistoryFile(historyFile, historyList);
-        // fflush(historyFile);
-        // fclose(historyFile);
-        /*
-        for (int i = 0; i < MAX_HISTORY; ++i) {
-            free(historyList[i]);
-        }
-        */
+        writeHistoryFile(historyFile, historyList);    
     }
-
     return 0;
 }
 
@@ -161,7 +147,6 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
                 printf("RUNNING:%s\n", *cmd);
             }
             parseCommand(*cmd, arguments, MAX_ARGS);
-            //if (debug)printf("RUNNING after parse:%s\n", cmd);
             if (!strcmp(arguments[0], "exit")) {
                 *running = false;
 
@@ -184,7 +169,6 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
 
         } else if (!strcmp(arguments[0], "set")) {
             setenv(arguments[1], arguments[3], 1);
-            printf("envset: %s\n", getenv(arguments[1]));
 
         } else if (!strcmp(arguments[0], "echo")) {
             int index = contains(arguments, '$');
@@ -206,6 +190,10 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
         } else if(!strcmp(arguments[0], "cls")){
             strcpy(arguments[0], "clear");
             spawn(arguments);
+        } else if(!strcmp(arguments[0], "clear")){
+            for (int i = 0; i < MAX_HISTORY; ++i) {
+                *historyList[i] = '\0';
+            }
         } else if(!strcmp(arguments[0], "clear")){
             for (int i = 0; i < MAX_HISTORY; ++i) {
                 *historyList[i] = '\0';

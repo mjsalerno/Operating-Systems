@@ -64,8 +64,6 @@ void removeNewline(char *string);
 
 void setPipes(char** args, int i, int j, int cmdSize, int rdSize, int *pipefd);
 
-void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
-void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 int contains(char *array[], char key);
 void historyDn(int *historyPtr);
 void historyUp(int *historyPtr);

@@ -234,9 +234,6 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
       // Start Child process
       if(execvp(args[0], args) < 0) {
         printf("%sUnable to start the process '%s'%s\n", RED, args[0], NONE);
-        // Try as file instead
-        close(pipefd[i + STDOUT_FILENO]);
-        open(args[0], 'w');
         exit(1);
       }
     }

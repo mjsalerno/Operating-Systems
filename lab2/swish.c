@@ -59,6 +59,7 @@ int main(int argc, char ** argv, char **envp) {
             for (i = 0; (i < MAX_HISTORY) && (NULL != fgets(historyList[i], MAX_INPUT, historyFile)); ++i){
                 removeNewline(historyList[i]);
             }
+            i--;
             fclose(historyFile);
             // for (int i = 0; i < 10; ++i){
             //    printf("HISTORY %d:%s\n", i, historyList[i]);
@@ -105,7 +106,7 @@ int main(int argc, char ** argv, char **envp) {
             cmd = strtok(NULL, "<|>");
         }
         // Evalue the user input
-        evaluateCommand(cmds, cmdsIndex, &running, wd, envp, script, &readingScript, debug, historyList, redirects, rdSize);
+        evaluateCommand(cmds, cmdsIndex, &running, wd, envp, script, &readingScript, debug, historyList, historyPtr,redirects, rdSize);
         // Reset Command
         resetCommand(&command);
         // Scripting Support
@@ -146,7 +147,7 @@ int main(int argc, char ** argv, char **envp) {
     return 0;
 }
 
-void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], REDIRECT_TYPE *redirects, int rdSize) {
+void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** envp, FILE *script, bool *readingScript, bool debug, char *historyList[], int historyPtr, REDIRECT_TYPE *redirects, int rdSize) {
     char *arguments[MAX_ARGS];
 
     // Something went wrong stop evaluating.
@@ -198,11 +199,18 @@ void evaluateCommand(char **cmd, int cmdSize, bool *running, char* wd, char** en
 
         } else if(!strcmp(arguments[0], "history")) {
             for (int i = 0; i < MAX_HISTORY && *historyList[i] != '\0'; ++i) {
-                printf("%3d: %s\n", i, historyList[i]);
-            }
-        } else if(!strcmp(arguments[0], "wolf")){
+                printf("%s\n", historyList[i]);
+            }            
+        } else if(!strcmp(arguments[0], "wolfie")){
             printWolf();
-        }else {
+        } else if(!strcmp(arguments[0], "cls")){
+            strcpy(arguments[0], "clear");
+            spawn(arguments);
+        } else if(!strcmp(arguments[0], "clear")){
+            for (int i = 0; i < MAX_HISTORY; ++i) {
+                *historyList[i] = '\0';
+            }
+        } else {
             spawn(arguments);
         }
 		if (debug) {

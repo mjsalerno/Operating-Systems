@@ -213,7 +213,7 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
 {
   int pipefd[2 * rdSize]/*, fd*/;
   char *args[MAX_ARGS];
-  char *cmd2[MAX_ARGS];
+  /*char *cmd2[MAX_ARGS];*/
 
   // Create pipes
   for(int i = 0; i < rdSize; i++) {
@@ -226,33 +226,40 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
   int pid, status;
   // Start spawning children
   for(int i = 0, j = 0; i < cmdSize; i++, j+=2) {
-    // Get command to spawn
+    // Create command
     parseCommand(commands[i], args, MAX_ARGS);
     printf("%sExecuting c%d - %s%s\n", MAGENTA, i, args[0], NONE);
     // Begin forking
     if((pid = fork()) == 0) {
-      if(i < rdSize){
-        switch(redirects[i])
-        {
-          case PIPE:
-            printf("Setting pipes\n");
-            setPipes(args, i, j, cmdSize, rdSize, pipefd);
-            break;
-          case REDIRECT_LEFT:
-            printf("Setting redirect left\n");
-            parseCommand(commands[i+1], cmd2, MAX_ARGS);
-            setLeftRedirect(args, cmd2, pipefd, i, j, cmdSize, rdSize);
-            i++;
-            break;
-          case REDIRECT_RIGHT:
-            break;
-          default:
-            printError("Undefined redirection operator.");
-            break;
-        }
-      } else {
-        setPipes(args, i, j, cmdSize, rdSize, pipefd);
+      // Set up pipes
+      setPipes(args, i, j, cmdSize, rdSize, pipefd);
+      /*
+      switch(redirects[i])
+      {
+        case PIPE:
+          // Get command to spawn
+          parseCommand(commands[i], args, MAX_ARGS);
+          // Set up pipes
+          setPipes(args, i, j, cmdSize, rdSize, pipefd);
+          break;
+        case REDIRECT_LEFT:
+          // Get command to spawn
+          parseCommand(commands[i], args, MAX_ARGS);
+          parseCommand(commands[i+1], cmd2, MAX_ARGS);
+          // Set up redirection
+          setLeftRedirect(args, cmd2, pipefd, i, j, cmdSize, rdSize);
+          //i+=2;
+          //j+=2;
+          break;
+        case REDIRECT_RIGHT:
+          break;
+        default:
+          //printError("Undefined redirection operator.");
+          parseCommand(commands[i], args, MAX_ARGS);
+          setPipes(args, i, j, cmdSize, rdSize, pipefd);
+          break;
       }
+      */
     }
   }
   // Close Parent pipes
@@ -289,21 +296,6 @@ void setPipes(char **args, int i, int j, int cmdSize, int rdSize, int *pipefd){
   }
 }
 
-void setLeftRedirect(char **cmd1, char **cmd2, int *pipefd, int i, int j, int cmdSize, int rdSize){
-  pipefd[j + 1] = open(cmd2[0], O_RDONLY);
-  if(i < cmdSize - 1) {
-    if(dup2(pipefd[j + 1], STDIN_FILENO) < 0) {
-      printError("An error occurred while trying to use dup2.\n");
-      exit(1);
-    }
-  }
-  // close unused pipes
-  for(int i = 0; i < 2 * rdSize; i++) {
-    close(pipefd[i]);
-  }
-  // Start Child process
-  if(execvp(cmd1[0], cmd1) < 0) {
-    printf("%sUnable to start the process '%s'%s\n", RED, cmd1[0], NONE);
-    exit(1);
-  } 
+void setLeftRedirect(char **cmd1, char **cmd2, int *pipefd, int i, int j, int cmdSize, int rdSize) {
+
 }

@@ -3,6 +3,7 @@
 #include "command.h"
 #include <stdbool.h>
 #include "swish.h"
+#include <glob.h>
 
 /* Cheat Sheet for printing out colors, and special things in the terminal */
 /* 0 -> Normal, 1 -> Bold, 4 -> underline, 9 -> Strike */
@@ -72,4 +73,5 @@ void historyShowUp(int *historyShow, char *historyList[]);
 void replaceCommand(char *cmd, Command *command, char* wd, char *prompt);
 void printWolf();
 FILE* openHistoryFile(char *rights);
+void getGlob(char *globList, char *pattern);
 #endif

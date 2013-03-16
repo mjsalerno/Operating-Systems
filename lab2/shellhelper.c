@@ -81,6 +81,20 @@ void historyShowUp(int *historyShow, char *historyList[]) {
   // printf("historyShow: %d\n", *historyShow);
 }
 
+void getGlob(char *globList, char *pattern){
+  glob_t globBuffer;
+  glob(pattern , 0 , NULL , &globBuffer);
+  int count = globBuffer.gl_pathc;
+
+  strcpy(globList, globBuffer.gl_pathv[0]);
+  strcat(globList, " ");    
+  for (int i=1; i < count; i++){    
+    strcat(globList, globBuffer.gl_pathv[i]);
+    strcat(globList, " ");    
+  }
+  globfree(&globBuffer);
+}
+
 void writeHistoryFile(FILE *historyFile, char *historyList[]) {
   if (historyFile == NULL)
     printf("-------------------------THE FILE IS NULL\n");
@@ -88,7 +102,6 @@ void writeHistoryFile(FILE *historyFile, char *historyList[]) {
   for (int i = 0; i < MAX_HISTORY; ++i) {
     if (*historyList[i] != '\0') {
       fprintf(historyFile, "%s\n", historyList[i]);
-      printf("WROTE: %s\n", historyList[i]);
     }
   }
 }
@@ -153,19 +166,27 @@ void parseCommand(char *command, char** parsed, int size){
   token = strtok(command, " ");
   while(token){
     if(i < size - 1){
-      index = strchr(token, '$');      
       parsed[i++] = token;
+      index = strchr(token, '$');      
       if(index != NULL){
         index++;
         parsed[i-1] = getenv(index);
       }
-      token = strtok(NULL, " "); 
+      index = strchr(token, '*');
+      if(index != NULL){
+        getGlob(parsed[i-1], index);
+      }
+    
+      token = strtok(NULL, " ");       
     }else{
       printError("Too Many Arguments provided.\n");
-    }
+    }    
   }
   // Append the NULL as the last argument in the array
-  parsed[i] = NULL;
+  parsed[i] = NULL;  
+  for (int i = 0; parsed[i] != NULL; ++i) {
+      printf("got: %s\n", parsed[i]);
+    }
 }
 
 char** argsBuilder(char *filename, int num, ...){

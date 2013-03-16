@@ -62,6 +62,8 @@ void printError(char *msg);
 
 void removeNewline(char *string);
 
+void setPipes(int i, int j, int cmdSize, int rdSize, int *fd);
+
 void setParentRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri);
 int contains(char *array[], char key);

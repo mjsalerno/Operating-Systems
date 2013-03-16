@@ -210,7 +210,7 @@ void spawn(char **args){
 
 void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int rdSize)
 {
-  int pipefd[2 * rdSize];
+  int pipefd[2 * rdSize, fd;
   char *args[MAX_ARGS];
 
   // Create pipes
@@ -226,7 +226,7 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
   for(int i = 0, j = 0; i < cmdSize; i++, j+=2) {
     // Get command to spawn
     parseCommand(commands[i], args, MAX_ARGS);
-    printf("%sExecuting c2 - %s%s\n", MAGENTA, args[0], NONE);
+    printf("%sExecuting c%d - %s%s\n", MAGENTA, i, args[0], NONE);
     // Begin forking
     if((pid = fork()) == 0) {
       if(i < cmdSize - 1) {
@@ -261,6 +261,10 @@ void spawnRedirect(char **commands, int cmdSize, REDIRECT_TYPE *redirects, int r
   // Wait for children
   printf("%sParent is waiting%s\n", MAGENTA, NONE);
   while(wait(&status) != pid); 
+}
+
+void setPipes(int i, int j, int cmdSize, int rdSize, int *fd){
+
 }
 
 void setChildRedirection(REDIRECT_TYPE *redirects, int *pipefd, int ri){

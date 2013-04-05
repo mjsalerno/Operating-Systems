@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "trie.h"
 
 struct trie_node {
@@ -15,9 +16,10 @@ struct trie_node {
 };
 
 static struct trie_node * root = NULL;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
+    printf("------------new_leaf\n");
     struct trie_node *new_node = malloc(sizeof (struct trie_node));
     
     assert(strlen < 64);
@@ -30,16 +32,12 @@ struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_addre
     new_node->children = NULL;
 
 
-
+    printf("------------new_leaf done\n");
     return new_node;
 }
 
 int compare_keys(const char *string1, int len1, const char *string2, int len2, int *pKeylen) {
-
-    int keylen, offset1, offset2, rc, result;
-
-    rc = pthread_mutex_lock(&mutex);
-    assert(rc == 0);
+    int keylen, offset1, offset2, result;
 
     keylen = len1 < len2 ? len1 : len2;
     offset1 = len1 - keylen;
@@ -49,9 +47,6 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
         *pKeylen = keylen;
 
     result = strncmp(&string1[offset1], &string2[offset2], keylen); 
-
-    rc = pthread_mutex_unlock(&mutex);
-    assert(rc == 0);
     return result;
 }
 
@@ -68,10 +63,18 @@ void init(int numthreads) {
 struct trie_node *
 _search(struct trie_node *node, const char *string, size_t strlen) {
 
-    int keylen, cmp;
+    int keylen, cmp, rc;
 
     // First things first, check if we are NULL 
-    if (node == NULL) return NULL;
+    rc = pthread_mutex_lock(&mutex);
+    assert(rc == 0);
+    printf("------------_search locked\n");
+    if (node == NULL) {
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
+        printf("------------_search unlocking\n");
+        return NULL;  
+    } 
 
     assert(node->strlen < 64);
 
@@ -82,38 +85,55 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
 
         // If this key is longer than our search string, the key isn't here
         if (node->strlen > keylen) {
+            rc = pthread_mutex_unlock(&mutex);
+            assert(rc == 0);
+            printf("------------_search unlocking\n");
             return NULL;
         } else if (strlen > keylen) {
             // Recur on children list
+            rc = pthread_mutex_unlock(&mutex);
+            assert(rc == 0);
+            printf("------------_search unlocking\n");
             return _search(node->children, string, strlen - keylen);
         } else {
             assert(strlen == keylen);
-
+            rc = pthread_mutex_unlock(&mutex);
+            assert(rc == 0);
+            printf("------------_search unlocking\n");
             return node;
         }
 
     } else if (cmp < 0) {
         // No, look right (the node's key is "less" than the search key)
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
+        printf("------------_search unlocking\n");
         return _search(node->next, string, strlen);
     } else {
         // Quit early
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
+        printf("------------_search unlocking\n");
         return 0;
     }
 
 }
 
 int search(const char *string, size_t strlen, int32_t *ip4_address) {
-	int rc, result;
-	rc = pthread_mutex_lock(&mutex);
-    assert(rc == 0);
+    int rc, result;
 
     struct trie_node *found;
 
     // Skip strings of length 0
-    if (strlen == 0)
+    if (strlen == 0){
         return 0;
+    }
 
     found = _search(root, string, strlen);
+
+    printf("------------search locking\n");
+    rc = pthread_mutex_lock(&mutex);
+    assert(rc == 0);
 
     if (found && ip4_address)
         *ip4_address = found->ip4_address;
@@ -122,6 +142,7 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
     
      rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);
+    printf("------------search unlocked\n");
 
     return result;
 }
@@ -239,16 +260,33 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
+    printf("------------insert locking\n");
+    int rc, result;
+    rc = pthread_mutex_lock(&mutex);
+    assert(rc == 0);
+    printf("------------insert locked\n");
     // Skip strings of length 0
-    if (strlen == 0)
+    if (strlen == 0){
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
         return 0;
+    }
 
     /* Edge case: root is null */
     if (root == NULL) {
         root = new_leaf(string, strlen, ip4_address);
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
+        printf("------------insert unlocked\n");
         return 1;
     }
-    return _insert(string, strlen, ip4_address, root, NULL, NULL);
+    
+    rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);
+    printf("------------insert unlocked\n");
+    result = _insert(string, strlen, ip4_address, root, NULL, NULL);
+
+    return result;
 }
 
 /* Recursive helper function.
@@ -332,11 +370,25 @@ _delete(struct trie_node *node, const char *string,
 }
 
 int delete(const char *string, size_t strlen) {
-    // Skip strings of length 0
-    if (strlen == 0)
-        return 0;
+    printf("------------del locking\n");
+    int result, rc;
+    rc = pthread_mutex_lock(&mutex);
+    printf("------------del locked\n");
+    assert(rc == 0);
 
-    return (NULL != _delete(root, string, strlen));
+    // Skip strings of length 0
+    if (strlen == 0){
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
+        return 0;
+    }
+
+    result = (NULL != _delete(root, string, strlen));
+
+    rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);
+    printf("------------del unlocked\n");
+    return result;
 }
 
 void _print(struct trie_node *node) {
@@ -349,6 +401,11 @@ void _print(struct trie_node *node) {
 }
 
 void print() {
+    int rc = pthread_mutex_lock(&mutex);
+    assert(rc == 0);
     /* Do a simple depth-first search */
     _print(root);
+
+    rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);
 }

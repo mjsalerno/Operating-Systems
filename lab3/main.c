@@ -21,11 +21,11 @@ volatile int finished = 0;
 
 // Uncomment this line for debug printing
 // #define DEBUG 1
-#ifdef DEBUG
-#define DEBUG_PRINT(...) printf(__VA_ARGS__)
-#else
+//#ifdef DEBUG
+//#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+//#else
 #define DEBUG_PRINT(...) 
-#endif
+//#endif
 
 static void *
 client(void *arg) {

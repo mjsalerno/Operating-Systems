@@ -7,11 +7,11 @@
 #include <pthread.h>
 #include "trie.h"
 
-//#ifdef DEBUG
+#ifdef DEBUG_MUTEX
 #define PRINT(M, S) printf("---File: %s Line: %3d Thread: %u Method: %s %s\n", __FILE__, __LINE__, (int)pthread_self(), (M), (S));
-//#else
-//#define PRINT(M, S) 
-//#endif
+#else
+#define PRINT(M, S) 
+#endif
 struct trie_node {
     struct trie_node *next; /* parent list */
     unsigned int strlen; /* Length of the key */

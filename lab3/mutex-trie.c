@@ -72,7 +72,7 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
     if (node == NULL) {
         rc = pthread_mutex_unlock(&mutex);
         assert(rc == 0);
-        printf("------------_search unlocking\n");
+        printf("------------_search unlocked\n");
         return NULL;  
     } 
 
@@ -87,19 +87,19 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
         if (node->strlen > keylen) {
             rc = pthread_mutex_unlock(&mutex);
             assert(rc == 0);
-            printf("------------_search unlocking\n");
+            printf("------------_search unlocked\n");
             return NULL;
         } else if (strlen > keylen) {
             // Recur on children list
             rc = pthread_mutex_unlock(&mutex);
             assert(rc == 0);
-            printf("------------_search unlocking\n");
+            printf("------------_search unlocked\n");
             return _search(node->children, string, strlen - keylen);
         } else {
             assert(strlen == keylen);
             rc = pthread_mutex_unlock(&mutex);
             assert(rc == 0);
-            printf("------------_search unlocking\n");
+            printf("------------_search unlocked\n");
             return node;
         }
 
@@ -107,13 +107,13 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
         // No, look right (the node's key is "less" than the search key)
         rc = pthread_mutex_unlock(&mutex);
         assert(rc == 0);
-        printf("------------_search unlocking\n");
+        printf("------------_search unlocked\n");
         return _search(node->next, string, strlen);
     } else {
         // Quit early
         rc = pthread_mutex_unlock(&mutex);
         assert(rc == 0);
-        printf("------------_search unlocking\n");
+        printf("------------_search unlocked\n");
         return 0;
     }
 
@@ -134,6 +134,8 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
     printf("------------search locking\n");
     rc = pthread_mutex_lock(&mutex);
     assert(rc == 0);
+
+    printf("------------search locked\n");
 
     if (found && ip4_address)
         *ip4_address = found->ip4_address;

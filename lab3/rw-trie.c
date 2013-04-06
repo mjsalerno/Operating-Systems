@@ -97,21 +97,25 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
 
 int search(const char *string, size_t strlen, int32_t *ip4_address) {
     struct trie_node *found;
-    int rc;
+    int rc, compare;
     // Skip strings of length 0
     if (strlen == 0)
         return 0;
 
-    found = _search(root, string, strlen);
-
-    rc = pthread_rwlock_rdlock(&rwlock);
-    // Make sure the return code is zero
+    rc = pthread_rwlock_rdlock( &rwlock );
     assert(rc == 0);
+    
+    found = _search(root, string, strlen);
+    
     if (found && ip4_address)
         *ip4_address = found->ip4_address;
-    rc = pthread_rwlock_unlock(&rwlock);
+    
+    compare = (found != NULL);
+    
+    rc = pthread_rwlock_unlock( &rwlock );
     assert(rc == 0);
-    return (found != NULL);
+
+    return compare;
 }
 
 /* Recursive helper function */
@@ -227,16 +231,30 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
+    int rc, _insert_rc;
     // Skip strings of length 0
     if (strlen == 0)
         return 0;
 
+    rc = pthread_rwlock_wrlock( &rwlock );
+    assert(rc == 0);
+
     /* Edge case: root is null */
     if (root == NULL) {
+        
         root = new_leaf(string, strlen, ip4_address);
+        
+        rc = pthread_rwlock_unlock( &rwlock );
+        assert(rc == 0);
         return 1;
     }
-    return _insert(string, strlen, ip4_address, root, NULL, NULL);
+
+    _insert_rc = _insert(string, strlen, ip4_address, root, NULL, NULL);
+
+    rc = pthread_rwlock_unlock( &rwlock );
+    assert(rc == 0);
+
+    return _insert_rc;
 }
 
 /* Recursive helper function.
@@ -320,11 +338,20 @@ _delete(struct trie_node *node, const char *string,
 }
 
 int delete(const char *string, size_t strlen) {
+    int rc, _delete_rc;
     // Skip strings of length 0
     if (strlen == 0)
         return 0;
+    
+    rc = pthread_rwlock_wrlock( &rwlock );
+    assert(rc == 0);
 
-    return (NULL != _delete(root, string, strlen));
+    _delete_rc = (NULL != _delete(root, string, strlen)); 
+
+    rc = pthread_rwlock_unlock( &rwlock );
+    assert(rc == 0);
+
+    return _delete_rc;
 }
 
 void _print(struct trie_node *node) {
@@ -337,6 +364,13 @@ void _print(struct trie_node *node) {
 }
 
 void print() {
+    int rc;
     /* Do a simple depth-first search */
+    rc = pthread_rwlock_rdlock( &rwlock );
+    assert(rc == 0);
+    
     _print(root);
+
+    rc = pthread_rwlock_unlock( &rwlock );
+    assert(rc == 0);
 }

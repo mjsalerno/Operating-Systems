@@ -18,6 +18,14 @@ int insert(const char *string, size_t strlen, int32_t ip4_address);
  */
 int search(const char *string, size_t strlen, int32_t *ip4_address);
 
+/**
+ * If ip4_address is not NULL, store the IP here.
+ * This operation is the same as search except there is no lock used on the
+ * inside. Instead it can be locked from the outside.(good for condition variables)
+ * @return Returns 1 if the key is found, else 0.
+ */
+int squat_search(const char *string, size_t strlen, int32_t *ip4_address);
+
 /* Return 1 if the key is found and deleted, 0 if not. */
 int delete (const char *string, size_t strlen);
 

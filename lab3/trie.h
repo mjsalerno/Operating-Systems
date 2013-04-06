@@ -37,5 +37,4 @@ void print();
  */
 extern int allow_squatting;
 
-
 #endif /* __TRIE_H__ */ 

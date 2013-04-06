@@ -23,6 +23,8 @@ struct trie_node {
 static struct trie_node * root = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
+static int waiting = 0;
+static int threadCount;
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
     PRINT("new_leaf creating", "NaN")
@@ -52,13 +54,15 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
     if (pKeylen)
         *pKeylen = keylen;
 
-    result = strncmp(&string1[offset1], &string2[offset2], keylen); 
+    result = strncmp(&string1[offset1], &string2[offset2], keylen);
+    PRINT("COMPARE", "KEYS DONE") 
     return result;
 }
 
 void init(int numthreads) {
     printf("Initializing a mutex-trie with %d threads\n", numthreads);
     root = NULL;
+    threadCount = numthreads;
 }
 
 /* Recursive helper function.
@@ -77,6 +81,7 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
     assert(node->strlen < 64);
     // See if this key is a substring of the string passed in
     cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
+    PRINT("BACK", "_SEARCH")
     if (cmp == 0) {
         // Yes, either quit, or recur on the children
         // If this key is longer than our search string, the key isn't here
@@ -131,7 +136,7 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
  * Same as search except locks can be implemented outside of the search function.
  */
 int squat_search(const char *string, size_t strlen, int32_t *ip4_address) {
-    int rc, result;
+    int result;
     struct trie_node *found;
 
     // Skip strings of length 0
@@ -264,40 +269,54 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
-    int rc, result;
-
-    // Skip strings of length 0
-    if (strlen == 0){
-        return 0;
-    }
-
-    // If squatting is enabled check to see if the node exists first.
-    /*
-    if(allow_squatting) {
-        while(search(string, strlen, &ip4_address)) {
-            pthread_cond_wait(&condition, &mutex);
+    int rc, result = 0;
+    // Remove multiple returns
+    if(strlen != 0) {
+        PRINT("insert", "locking")
+        rc = pthread_mutex_lock(&mutex);
+        assert(rc == 0);
+        PRINT("insert", "locked")
+        // If squatting is enabled check to see if the node exists first.
+        if(allow_squatting && squat_search(string, strlen, &ip4_address)) {
+            /*
+            waiting++;
+            printf("Number of waits %d\n", waiting);
+            if(waiting != threadCount) {
+                pthread_cond_wait(&condition, &mutex);    
+            } else {
+                printf("All threads need to wait. Unable to squat on the address %s.\n", string);
+            }
+            waiting--;
+            */
+                 
+            while(squat_search(string, strlen, &ip4_address)) {
+                waiting++;
+                printf("Number of waits %d == %d ThreadID: %lu.\n", waiting, threadCount, (long)pthread_self());
+                if(waiting != threadCount) {
+                    pthread_cond_wait(&condition, &mutex);    
+                } else {
+                    printf("All threads need to wait. Unable to squat on the url '%s'\n", string);
+                    exit(1);
+                }
+                waiting--;
+            }
+            
         }
-    }
-    */
-
-    PRINT("insert", "locking")
-    rc = pthread_mutex_lock(&mutex);
-    assert(rc == 0);
-    PRINT("insert", "locked")
-
-    /* Edge case: root is null */
-    if (root == NULL) {
-        root = new_leaf(string, strlen, ip4_address);
+        PRINT("PRE-ROOT", "CHECK")
+        // Check the edgecase of a null root
+        if (root == NULL) {
+            root = new_leaf(string, strlen, ip4_address);
+            result = 1;
+        } else {
+            PRINT("INSERT", "STARTED")
+            // Call the recursive insert function
+            result = _insert(string, strlen, ip4_address, root, NULL, NULL);
+            PRINT("INSERT", "BACK")
+        }
         rc = pthread_mutex_unlock(&mutex);
         assert(rc == 0);
         PRINT("insert", "unlocked")
-        return 1;
     }
-    // Call the recursive insert function
-    result = _insert(string, strlen, ip4_address, root, NULL, NULL);
-    rc = pthread_mutex_unlock(&mutex);
-    assert(rc == 0);
-    PRINT("insert", "unlocked")
     return result;
 }
 
@@ -396,6 +415,7 @@ int delete(const char *string, size_t strlen) {
     
     // if squatting is allowed and a key was deleted.
     if(allow_squatting && result) {
+        //pthread_cond_signal(&condition);
         pthread_cond_broadcast(&condition);
     }
 

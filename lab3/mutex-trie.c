@@ -22,6 +22,7 @@ struct trie_node {
 
 static struct trie_node * root = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
     PRINT("new_leaf creating", "NaN")
@@ -117,11 +118,33 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
         *ip4_address = found->ip4_address;
 
     result = (found != NULL);
-    
+
     PRINT("search", "unlocking")
     rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);
     PRINT("search", "unlocked")
+
+    return result;
+}
+
+/**
+ * Same as search except locks can be implemented outside of the search function.
+ */
+int squat_search(const char *string, size_t strlen, int32_t *ip4_address) {
+    int rc, result;
+    struct trie_node *found;
+
+    // Skip strings of length 0
+    if (strlen == 0){
+        return 0;
+    }
+
+    found = _search(root, string, strlen);
+
+    if (found && ip4_address)
+        *ip4_address = found->ip4_address;
+
+    result = (found != NULL);
 
     return result;
 }
@@ -248,6 +271,15 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
         return 0;
     }
 
+    // If squatting is enabled check to see if the node exists first.
+    /*
+    if(allow_squatting) {
+        while(search(string, strlen, &ip4_address)) {
+            pthread_cond_wait(&condition, &mutex);
+        }
+    }
+    */
+
     PRINT("insert", "locking")
     rc = pthread_mutex_lock(&mutex);
     assert(rc == 0);
@@ -352,7 +384,7 @@ _delete(struct trie_node *node, const char *string,
 int delete(const char *string, size_t strlen) {
     int result, rc;
     // Skip strings of length 0
-    if (strlen == 0){
+    if (strlen == 0) {
         return 0;
     }
     PRINT("delete", "locking")
@@ -362,6 +394,11 @@ int delete(const char *string, size_t strlen) {
 
     result = (NULL != _delete(root, string, strlen));
     
+    // if squatting is allowed and a key was deleted.
+    if(allow_squatting && result) {
+        pthread_cond_broadcast(&condition);
+    }
+
     PRINT("delete", "unlocking")
     rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);

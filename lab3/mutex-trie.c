@@ -79,26 +79,32 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
         return NULL;  
     } 
     assert(node->strlen < 64);
+    PRINT("_SEARCH ENTER", "COMPARE_KEYS")
     // See if this key is a substring of the string passed in
     cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
-    PRINT("BACK", "_SEARCH")
+    PRINT("_SEARCH RETURN", "COMPARE_KEYS")
     if (cmp == 0) {
         // Yes, either quit, or recur on the children
         // If this key is longer than our search string, the key isn't here
         if (node->strlen > keylen) {
+            PRINT("_SEARCH", "NULL")
             return NULL;
         } else if (strlen > keylen) {
             // Recur on children list
+            PRINT("_SEARCH", "RECURSE - CHILD")
             return _search(node->children, string, strlen - keylen);
         } else {
             assert(strlen == keylen);
+            PRINT("_SEARCH", "NODE")
             return node;
         }
     } else if (cmp < 0) {
         // No, look right (the node's key is "less" than the search key)
+        PRINT("_SEARCH", "RECURSE - NEXT")
         return _search(node->next, string, strlen);
     } else {
         // Quit early
+        PRINT("_SEARCH", "QUIT EARLY")
         return 0;
     }
 }
@@ -117,7 +123,9 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
     assert(rc == 0);
     PRINT("search", "locked")
     
+    PRINT("SEARCH ENTER", "_SEARCH")
     found = _search(root, string, strlen);
+    PRINT("SEARCH RETURNED", "_SEARCH")
 
     if (found && ip4_address)
         *ip4_address = found->ip4_address;
@@ -144,12 +152,18 @@ int squat_search(const char *string, size_t strlen, int32_t *ip4_address) {
         return 0;
     }
 
+    PRINT("SQUAT_SEARCH ENTER", "_SEARCH")
     found = _search(root, string, strlen);
+    PRINT("SQUAT_SEARCH RETURNED", "_SEARCH")
 
+    PRINT("SQUAT_SEARCH", "CHECK_IP")
     if (found && ip4_address)
         *ip4_address = found->ip4_address;
+    PRINT("SQUAT_SEARCH", "DONE CHECK_IP")
 
+    PRINT("SQUAT_SEARCH", "COMPARE FOUND")
     result = (found != NULL);
+    PRINT("SQUAT_SEARCH", "DONE COMPARE_TRIE")
 
     return result;
 }
@@ -163,10 +177,10 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
     // First things first, check if we are NULL 
     assert(node != NULL);
     assert(node->strlen < 64);
-
+    PRINT("_INSERT", "COMPARE_KEYS ENTERING")
     // Take the minimum of the two lengths
     cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
-
+    PRINT("_INSERT", "COMPARE_KEYS EXITING")
     if (cmp == 0) {
         // Yes, either quit, or recur on the children
 
@@ -291,16 +305,15 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
                  
             while(squat_search(string, strlen, &ip4_address)) {
                 waiting++;
-                printf("Number of waits %d == %d ThreadID: %lu.\n", waiting, threadCount, (long)pthread_self());
+                printf("Number of waits %d == %d ThreadID: %lu. - Unable to squat on '%s'\n", waiting, threadCount, (long)pthread_self(), string);
                 if(waiting != threadCount) {
                     pthread_cond_wait(&condition, &mutex);    
                 } else {
                     printf("All threads need to wait. Unable to squat on the url '%s'\n", string);
-                    exit(1);
+                    //exit(1);
                 }
                 waiting--;
-            }
-            
+            }   
         }
         PRINT("PRE-ROOT", "CHECK")
         // Check the edgecase of a null root

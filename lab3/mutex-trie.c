@@ -46,7 +46,7 @@ struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_addre
 
 int compare_keys(const char *string1, int len1, const char *string2, int len2, int *pKeylen) {
     int keylen, offset1, offset2, result;
-    PRINT("COMPARE", "KEYS")
+    PRINT("COMPARE", "KEYS START")
     keylen = len1 < len2 ? len1 : len2;
     offset1 = len1 - keylen;
     offset2 = len2 - keylen;
@@ -292,24 +292,18 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
         PRINT("insert", "locked")
         // If squatting is enabled check to see if the node exists first.
         if(allow_squatting && squat_search(string, strlen, &ip4_address)) {
-            /*
-            waiting++;
-            printf("Number of waits %d\n", waiting);
-            if(waiting != threadCount) {
-                pthread_cond_wait(&condition, &mutex);    
-            } else {
-                printf("All threads need to wait. Unable to squat on the address %s.\n", string);
-            }
-            waiting--;
-            */
-                 
             while(squat_search(string, strlen, &ip4_address)) {
                 waiting++;
-                printf("Number of waits %d == %d ThreadID: %lu. - Unable to squat on '%s'\n", waiting, threadCount, (long)pthread_self(), string);
+                printf("Number of waits %d == %d ThreadID: %lu. - Waiting to insert '%s'\n", waiting, threadCount, (long)pthread_self(), string);
                 if(waiting != threadCount) {
                     pthread_cond_wait(&condition, &mutex);    
                 } else {
                     printf("All threads need to wait. Unable to squat on the url '%s'\n", string);
+                    // Unlock and return a failure
+                    rc = pthread_mutex_unlock(&mutex);
+                    assert(rc == 0);            
+                    waiting--;
+                    return 0;
                     //exit(1);
                 }
                 waiting--;
@@ -429,7 +423,9 @@ int delete(const char *string, size_t strlen) {
     // if squatting is allowed and a key was deleted.
     if(allow_squatting && result) {
         //pthread_cond_signal(&condition);
-        pthread_cond_broadcast(&condition);
+        rc = pthread_cond_broadcast(&condition);
+        // Check to see if the broadcasr was successful
+        assert (rc == 0);
     }
 
     PRINT("delete", "unlocking")

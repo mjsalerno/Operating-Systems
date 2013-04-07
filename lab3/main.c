@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
+#include <signal.h>
 #include "trie.h"
 
 int allow_squatting = 0;
@@ -243,8 +244,10 @@ int main(int argc, char ** argv) {
     for (i = 0; i < numthreads; i++) {
 
         if (stress_squatting) {
+            int oldType;
             rv = pthread_create(&tinfo[i], NULL,
                     &squatter_stress, &i);
+            pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldType);
         } else {
             rv = pthread_create(&tinfo[i], NULL,
                     &client, NULL);
@@ -263,19 +266,29 @@ int main(int argc, char ** argv) {
     // cancel the threads, since they may hang forever
     if (allow_squatting) {
         for (i = 0; i < numthreads; i++) {
-            int rv = pthread_cancel(tinfo[i]);
-            if (rv != 0)
-                printf("Uh oh.  pthread_cancel failed %d\n", rv);
+            print("Attempting to cancel thread %d\n", i + 1);
+            if(pthread_kill(tinfo[i], 0) == 0) {
+                int rv = pthread_cancel(tinfo[i]);
+                // int rv = pthread_kill(tinfo[i], SIGKILL);
+                if (rv != 0) {
+                    printf("Uh oh.  pthread_cancel failed %d\n", rv);
+                } else {
+                    printf("Thread %d was successfully canceled.\n", i+1);
+                }
+            } else {
+                printf("Thread %d seems to be dead.\n", i+1);
+            }
         }
     }
 
     for (i = 0; i < numthreads; i++) {
+        printf("Joining thread %d\n", i+1);
         int rv = pthread_join(tinfo[i], NULL);
         if (rv != 0)
             printf("Uh oh.  pthread_join failed %d\n", rv);
     }
 
-#ifdef DEBUG  
+#ifdef DEBUG
     /* Print the final tree for fun */
     print();
 #endif

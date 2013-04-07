@@ -39,7 +39,6 @@ struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_addre
     new_node->ip4_address = ip4_address;
     new_node->children = NULL;
 
-
     PRINT("new_leaf done", "NaN")
     return new_node;
 }

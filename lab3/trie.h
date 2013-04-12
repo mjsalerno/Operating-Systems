@@ -18,6 +18,12 @@ int insert (const char *string, size_t strlen, int32_t ip4_address);
  */
 int search  (const char *string, size_t strlen, int32_t *ip4_address);
 
+/*
+ * Same as search except there is no locks within this function.
+ * (locking is done from the outside.)
+ */
+int squat_search  (const char *string, size_t strlen, int32_t *ip4_address);
+
 /* Return 1 if the key is found and deleted, 0 if not. */
 int delete  (const char *string, size_t strlen);
 

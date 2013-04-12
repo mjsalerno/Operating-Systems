@@ -116,8 +116,9 @@ squatter_stress(void *arg)
    * until a given name is available again.
    */
   int32_t ip = random();
-
+  int testCount = 1;
   while (!finished) {
+    printf("=== Test %d is starting - ThreadID: %lu\n", testCount, (long)pthread_self());
     insert ("abc", 3, ip);
     insert ("abe", 3, ip);
     insert ("bce", 3, ip);
@@ -126,6 +127,7 @@ squatter_stress(void *arg)
     delete ("abe", 3);
     delete ("bce", 3);
     delete ("bcc", 3);
+    printf("=== Test %d is ending - ThreadID: %lu\n\n", testCount++, (long)pthread_self());
   }
 
   return NULL;

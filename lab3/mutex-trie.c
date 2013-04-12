@@ -18,7 +18,7 @@ struct trie_node {
 static struct trie_node * root = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
-static int waiting = 0;
+// static int volatile waiting = 0;
 static int threadCount;
 
 struct trie_node * new_leaf (const char *string, size_t strlen, int32_t ip4_address) {
@@ -53,7 +53,7 @@ int compare_keys (const char *string1, int len1, const char *string2, int len2, 
 void init(int numthreads) {
 	assert(numthreads > 0);
 	// keep track of the number of threads being used.
-  threadCount  = numThreads;
+  threadCount  = numthreads;
   root = NULL;
 }
 
@@ -123,6 +123,19 @@ int search  (const char *string, size_t strlen, int32_t *ip4_address) {
   assert(rc == 0);
 
   return result;
+}
+
+int squat_search (const char *string, size_t strlen, int32_t *ip4_address) {
+	struct trie_node *found;
+  int result = 0;
+  // Skip strings of length 0
+  if (strlen == 0)
+    return result;
+  found = _search(root, string, strlen);
+  if (found && ip4_address)
+    *ip4_address = found->ip4_address;
+  result = (found != NULL);
+  return result;	
 }
 
 /* Recursive helper function */
@@ -253,6 +266,16 @@ int insert (const char *string, size_t strlen, int32_t ip4_address) {
   	// obtain the lock
   	rc = pthread_mutex_lock(&mutex);
   	assert(rc == 0);
+  	// If squatting is enabled check to see if the node exists first.
+    if(allow_squatting && squat_search(string, strlen, &ip4_address)) {
+      // Check to see if what we are trying to insert exists
+      do {
+      	printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long)pthread_self(), string);
+	      pthread_cond_wait(&condition, &mutex);
+	      printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long)pthread_self());
+      } while(squat_search(string, strlen, &ip4_address));  
+    }
+       
   	/* Edge case: root is null */
   	if (root == NULL) {
     	root = new_leaf (string, strlen, ip4_address);
@@ -260,7 +283,8 @@ int insert (const char *string, size_t strlen, int32_t ip4_address) {
   	} else { 
   		result = _insert (string, strlen, ip4_address, root, NULL, NULL);
   	}
-		// Unlock
+  	printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long)pthread_self(), string);
+  	// Unlock
   	rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);	
   }
@@ -353,6 +377,16 @@ int delete  (const char *string, size_t strlen) {
   	assert(rc == 0);
   	// Attempt to delete the node.
   	result = (NULL != _delete(root, string, strlen));
+
+  	 // if squatting is allowed and a key was deleted.
+    if(allow_squatting && result) {
+    		printf("%lu ThreadID: %lu - Broadcasting a delete on node %s\n", time(NULL), (long)pthread_self(), string);
+        //pthread_cond_signal(&condition);
+        rc = pthread_cond_broadcast(&condition);
+        // Check to see if the broadcasr was successful
+        assert (rc == 0);
+    }
+
 	  // Unlock
 	  rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "trie.h"
 
 struct trie_node {
@@ -15,6 +16,10 @@ struct trie_node {
 };
 
 static struct trie_node * root = NULL;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
+static int waiting = 0;
+static int threadCount;
 
 struct trie_node * new_leaf (const char *string, size_t strlen, int32_t ip4_address) {
   struct trie_node *new_node = malloc(sizeof(struct trie_node));
@@ -46,9 +51,9 @@ int compare_keys (const char *string1, int len1, const char *string2, int len2, 
 }
 
 void init(int numthreads) {
-  if (numthreads != 1)
-    printf("WARNING: This Trie is only safe to use with one thread!!!  You have %d!!!\n", numthreads);
-
+	assert(numthreads > 0);
+	// keep track of the number of threads being used.
+  threadCount  = numThreads;
   root = NULL;
 }
 
@@ -95,20 +100,29 @@ _search (struct trie_node *node, const char *string, size_t strlen) {
 
 }
 
-
 int search  (const char *string, size_t strlen, int32_t *ip4_address) {
   struct trie_node *found;
+  int rc, result;
 
   // Skip strings of length 0
   if (strlen == 0)
     return 0;
 
+  // obtain the lock
+  rc = pthread_mutex_lock(&mutex);
+  assert(rc == 0);
   found = _search(root, string, strlen);
   
   if (found && ip4_address)
     *ip4_address = found->ip4_address;
 
-  return (found != NULL);
+  result = (found != NULL);
+
+  // Return the lock
+  rc = pthread_mutex_unlock(&mutex);
+  assert(rc == 0);
+
+  return result;
 }
 
 /* Recursive helper function */
@@ -233,23 +247,30 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert (const char *string, size_t strlen, int32_t ip4_address) {
+  int result = 0, rc;
   // Skip strings of length 0
-  if (strlen == 0)
-    return 0;
-
-  /* Edge case: root is null */
-  if (root == NULL) {
-    root = new_leaf (string, strlen, ip4_address);
-    return 1;
+  if (strlen != 0) {
+  	// obtain the lock
+  	rc = pthread_mutex_lock(&mutex);
+  	assert(rc == 0);
+  	/* Edge case: root is null */
+  	if (root == NULL) {
+    	root = new_leaf (string, strlen, ip4_address);
+    	result = 1;
+  	} else { 
+  		result = _insert (string, strlen, ip4_address, root, NULL, NULL);
+  	}
+		// Unlock
+  	rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);	
   }
-  return _insert (string, strlen, ip4_address, root, NULL, NULL);
+  return result;
 }
 
 /* Recursive helper function.
  * Returns a pointer to the node if found.
  * Stores an optional pointer to the 
  * parent, or what should be the parent if not found.
- * 
  */
 struct trie_node * 
 _delete (struct trie_node *node, const char *string, 
@@ -324,13 +345,20 @@ _delete (struct trie_node *node, const char *string,
 }
 
 int delete  (const char *string, size_t strlen) {
+  int result = 0, rc;
   // Skip strings of length 0
-  if (strlen == 0)
-    return 0;
-
-  return (NULL != _delete(root, string, strlen));
+  if (strlen != 0) {
+  	// Obtain the lock
+  	rc = pthread_mutex_lock(&mutex);
+  	assert(rc == 0);
+  	// Attempt to delete the node.
+  	result = (NULL != _delete(root, string, strlen));
+	  // Unlock
+	  rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);
+  }
+  return result;
 }
-
 
 void _print (struct trie_node *node) {
   printf ("Node at %p.  Key %.*s, IP %d.  Next %p, Children %p\n", 
@@ -342,8 +370,17 @@ void _print (struct trie_node *node) {
 }
 
 void print() {
+ 	int rc;
+  // Obtain the lock
+	rc = pthread_mutex_lock(&mutex);
+	assert(rc == 0);
+
   printf ("Root is at %p\n", root);
   /* Do a simple depth-first search */
   if (root)
     _print(root);
+
+  // Unlock
+  rc = pthread_mutex_unlock(&mutex);
+  assert(rc == 0);
 }

@@ -11,24 +11,24 @@
 #include "trie.h"
 
 void init(int numthreads) {
-    /* Your code here */
+  /* Your code here */
 }
 
-int insert(const char *string, size_t strlen, int32_t ip4_address) {
-    /* Your code here */
-    return 0;
+
+int insert (const char *string, size_t strlen, int32_t ip4_address) {
+  /* Your code here */
+  return 0;
 }
 
-int search(const char *string, size_t strlen, int32_t *ip4_address) {
-    /* Your code here */
-    return 0;
+int search  (const char *string, size_t strlen, int32_t *ip4_address) {
+  /* Your code here */
+  return 0;
 }
-
-int delete(const char *string, size_t strlen) {
-    /* Your code here */
-    return 0;
+int delete  (const char *string, size_t strlen) {
+  /* Your code here */
+  return 0;
 }
 
 void print() {
-    /* Your code here */
+  /* Your code here */
 }

@@ -44,8 +44,6 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
     keylen = len1 < len2 ? len1 : len2;
     offset1 = len1 - keylen;
     offset2 = len2 - keylen;
-    printf("String1: '%s', String2: '%s'\n", string1, string2);
-    printf("Keylen: %d\n", keylen);
     assert(keylen > 0);
     if (pKeylen)
         *pKeylen = keylen;
@@ -151,7 +149,6 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
     assert(node->strlen < 64);
 
     // Take the minimum of the two lengths
-    printf("_insert compare_keys\n");
     cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
     if (cmp == 0) {
         // Yes, either quit, or recur on the children
@@ -257,6 +254,8 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             new_node->next = node;
             if (node == root)
                 root = new_node;
+            else if (parent && parent->children == node)
+                parent->children = new_node;
         }
         return 1;
     }
@@ -264,35 +263,36 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
     int result = 0, rc;
-    // obtain the lock
-    rc = pthread_mutex_lock(&mutex);
-    assert(rc == 0);
-    // If squatting is enabled check to see if the node exists first.
-    if (allow_squatting && squat_search(string, strlen, &ip4_address)) {
-        // Check to see if what we are trying to insert exists
-        do {
-            printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long) pthread_self(), string);
-            waiting++;
-            if(waiting == threadCount) {
-                printf("\n=== All threads are now squatting. Waiting for the simulation to end. ===\n\n");
-            }
-            pthread_cond_wait(&condition, &mutex);
-            waiting--;
-            printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long) pthread_self());
-        } while (squat_search(string, strlen, &ip4_address));
+    if(strlen > 0) {
+        // obtain the lock
+        rc = pthread_mutex_lock(&mutex);
+        assert(rc == 0);
+        // If squatting is enabled check to see if the node exists first.
+        if (allow_squatting && squat_search(string, strlen, &ip4_address)) {
+            // Check to see if what we are trying to insert exists
+            do {
+                printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long) pthread_self(), string);
+                waiting++;
+                if(waiting == threadCount) {
+                    printf("\n=== All threads are now squatting. Waiting for the simulation to end. ===\n\n");
+                }
+                pthread_cond_wait(&condition, &mutex);
+                waiting--;
+                printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long) pthread_self());
+            } while (squat_search(string, strlen, &ip4_address));
+        }
+        /* Edge case: root is null */
+        if (root == NULL) {
+            root = new_leaf(string, strlen, ip4_address);
+            result = 1;
+        } else {
+            result = _insert(string, strlen, ip4_address, root, NULL, NULL);
+        }
+        printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);
+        // Unlock
+        rc = pthread_mutex_unlock(&mutex);
+        assert(rc == 0);
     }
-    /* Edge case: root is null */
-    if (root == NULL) {
-        root = new_leaf(string, strlen, ip4_address);
-        result = 1;
-    } else {
-        printf("Insert else");
-        result = _insert(string, strlen, ip4_address, root, NULL, NULL);
-    }
-    printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);
-    // Unlock
-    rc = pthread_mutex_unlock(&mutex);
-    assert(rc == 0);
     return result;
 }
 
@@ -345,6 +345,17 @@ _delete(struct trie_node *node, const char *string,
             /* We found it! Clear the ip4 address and return. */
             if (node->ip4_address) {
                 node->ip4_address = 0;
+
+                /* Delete the root node if we empty the tree */
+                if (node == root && node->children == NULL && node->ip4_address == 0) {
+                    root = node->next;
+                    free(node);
+                    return (struct trie_node *) 0x100100; /* XXX: Don't use this pointer for anything except 
+                         * comparison with NULL, since the memory is freed.
+                         * Return a "poison" pointer that will probably 
+                         * segfault if used.
+                         */
+                }
                 return node;
             } else {
                 /* Just an interior node with no value */
@@ -374,6 +385,7 @@ _delete(struct trie_node *node, const char *string,
 }
 
 int delete(const char *string, size_t strlen) {
+    // TODO: Add delete patch
     int result = 0, rc;
     // Skip strings of length 0
     if (strlen != 0) {

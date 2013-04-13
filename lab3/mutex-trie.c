@@ -44,6 +44,8 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
     keylen = len1 < len2 ? len1 : len2;
     offset1 = len1 - keylen;
     offset2 = len2 - keylen;
+    printf("String1: '%s', String2: '%s'\n", string1, string2);
+    printf("Keylen: %d\n", keylen);
     assert(keylen > 0);
     if (pKeylen)
         *pKeylen = keylen;
@@ -149,6 +151,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
     assert(node->strlen < 64);
 
     // Take the minimum of the two lengths
+    printf("_insert compare_keys\n");
     cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
     if (cmp == 0) {
         // Yes, either quit, or recur on the children
@@ -283,6 +286,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
         root = new_leaf(string, strlen, ip4_address);
         result = 1;
     } else {
+        printf("Insert else");
         result = _insert(string, strlen, ip4_address, root, NULL, NULL);
     }
     printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);

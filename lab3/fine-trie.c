@@ -150,7 +150,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
         // "above" this node
         if (node->strlen > keylen) {
             struct trie_node *new_node;
-
+            
             assert(keylen == strlen);
             assert((!parent) || parent->children == node);
 
@@ -187,6 +187,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 node->ip4_address = ip4_address;
                 return 1;
             } else {
+                //SQUATTING----------------------------------------------------
                 return 0;
             }
         }

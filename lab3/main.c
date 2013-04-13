@@ -41,7 +41,6 @@ client(void *arg) {
     initstate_r(salt, rand_state, sizeof (rand_state), &rd);
 
     while (!finished) {
-        printf("GOIN\n");
         /* Pick a random operation, string, and ip */
         int32_t code;
         int rv = random_r(&rd, &code);

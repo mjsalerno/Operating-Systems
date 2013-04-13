@@ -262,8 +262,9 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
-    int result = 0, rc;
+    int result = 0;
     if(strlen > 0) {
+        int rc;
         // obtain the lock
         rc = pthread_mutex_lock(&mutex);
         assert(rc == 0);
@@ -385,10 +386,10 @@ _delete(struct trie_node *node, const char *string,
 }
 
 int delete(const char *string, size_t strlen) {
-    // TODO: Add delete patch
-    int result = 0, rc;
+    int result = 0;
     // Skip strings of length 0
     if (strlen != 0) {
+        int rc;
         // Obtain the lock
         rc = pthread_mutex_lock(&mutex);
         assert(rc == 0);

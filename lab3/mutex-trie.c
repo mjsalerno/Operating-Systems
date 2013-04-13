@@ -1,4 +1,4 @@
-/* A simple, (reverse) trie.  Only for use with 1 thread. */
+/* A simple, (reverse) trie.  Uses a mutex for locking. */
 
 #include <stddef.h>
 #include <stdio.h>

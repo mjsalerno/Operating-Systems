@@ -260,7 +260,7 @@ int main(int argc, char ** argv) {
     // After the simulation is done, shut it down
     sleep(simulation_length);
     finished = 1;
-
+    printf("Simulation is finished.\n");
     // Wait for all clients to exit.  If we are allowing blocking,
     // cancel the threads, since they may hang forever
     if (allow_squatting) {

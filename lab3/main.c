@@ -78,7 +78,6 @@ client(void *arg) {
 
         DEBUG_PRINT("Random string is %s\n", buf);
 
-
         switch (code % 3) {
             case 0: // Search
                 DEBUG_PRINT("Search\n");
@@ -102,7 +101,6 @@ client(void *arg) {
                 assert(0);
         }
     }
-
     return NULL;
 }
 
@@ -115,6 +113,9 @@ squatter_stress(void *arg) {
      */
     int32_t ip = random();
     int testCount = 1;
+
+    pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
     while (!finished) {
         printf("=== Test %d is starting - ThreadID: %lu\n", testCount, (long) pthread_self());
         insert("abc", 3, ip);
@@ -262,20 +263,23 @@ int main(int argc, char ** argv) {
     sleep(simulation_length);
     finished = 1;
     printf("Simulation is finished.\n");
+    print();
     // Wait for all clients to exit.  If we are allowing blocking,
     // cancel the threads, since they may hang forever
     if (allow_squatting) {
+        printf("Canceling all threads.\n");
         for (i = 0; i < numthreads; i++) {
             int rv = pthread_cancel(tinfo[i]);
             if (rv != 0)
                 printf("Uh oh.  pthread_cancel failed %d\n", rv);
         }
-    }
-
-    for (i = 0; i < numthreads; i++) {
-        int rv = pthread_join(tinfo[i], NULL);
-        if (rv != 0)
-            printf("Uh oh.  pthread_join failed %d\n", rv);
+    } else {
+        printf("Joining remaining threads.\n");
+        for (i = 0; i < numthreads; i++) {
+            int rv = pthread_join(tinfo[i], NULL);
+            if (rv != 0)
+                printf("Uh oh.  pthread_join failed %d\n", rv);
+        }
     }
 
 #ifdef DEBUG  

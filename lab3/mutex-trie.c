@@ -18,7 +18,7 @@ struct trie_node {
 static struct trie_node * root = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
-// static int volatile waiting = 0;
+static int volatile waiting = 0;
 static int threadCount;
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
@@ -100,6 +100,19 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
 
 }
 
+int squat_search(const char *string, size_t strlen, int32_t *ip4_address) {
+    struct trie_node *found;
+    int result = 0;
+    // Skip strings of length 0
+    if (strlen == 0)
+        return result;
+    found = _search(root, string, strlen);
+    if (found && ip4_address)
+        *ip4_address = found->ip4_address;
+    result = (found != NULL);
+    return result;
+}
+
 int search(const char *string, size_t strlen, int32_t *ip4_address) {
     struct trie_node *found;
     int rc, result;
@@ -122,19 +135,6 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
     rc = pthread_mutex_unlock(&mutex);
     assert(rc == 0);
 
-    return result;
-}
-
-int squat_search(const char *string, size_t strlen, int32_t *ip4_address) {
-    struct trie_node *found;
-    int result = 0;
-    // Skip strings of length 0
-    if (strlen == 0)
-        return result;
-    found = _search(root, string, strlen);
-    if (found && ip4_address)
-        *ip4_address = found->ip4_address;
-    result = (found != NULL);
     return result;
 }
 
@@ -261,33 +261,34 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
     int result = 0, rc;
-    // Skip strings of length 0
-    if (strlen != 0) {
-        // obtain the lock
-        rc = pthread_mutex_lock(&mutex);
-        assert(rc == 0);
-        // If squatting is enabled check to see if the node exists first.
-        if (allow_squatting && squat_search(string, strlen, &ip4_address)) {
-            // Check to see if what we are trying to insert exists
-            do {
-                printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long) pthread_self(), string);
-                pthread_cond_wait(&condition, &mutex);
-                printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long) pthread_self());
-            } while (squat_search(string, strlen, &ip4_address));
-        }
-
-        /* Edge case: root is null */
-        if (root == NULL) {
-            root = new_leaf(string, strlen, ip4_address);
-            result = 1;
-        } else {
-            result = _insert(string, strlen, ip4_address, root, NULL, NULL);
-        }
-        printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);
-        // Unlock
-        rc = pthread_mutex_unlock(&mutex);
-        assert(rc == 0);
+    // obtain the lock
+    rc = pthread_mutex_lock(&mutex);
+    assert(rc == 0);
+    // If squatting is enabled check to see if the node exists first.
+    if (allow_squatting && squat_search(string, strlen, &ip4_address)) {
+        // Check to see if what we are trying to insert exists
+        do {
+            printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long) pthread_self(), string);
+            waiting++;
+            if(waiting == threadCount) {
+                printf("\n=== All threads are now squatting. Waiting for the simulation to end. ===\n\n");
+            }
+            pthread_cond_wait(&condition, &mutex);
+            waiting--;
+            printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long) pthread_self());
+        } while (squat_search(string, strlen, &ip4_address));
     }
+    /* Edge case: root is null */
+    if (root == NULL) {
+        root = new_leaf(string, strlen, ip4_address);
+        result = 1;
+    } else {
+        result = _insert(string, strlen, ip4_address, root, NULL, NULL);
+    }
+    printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);
+    // Unlock
+    rc = pthread_mutex_unlock(&mutex);
+    assert(rc == 0);
     return result;
 }
 

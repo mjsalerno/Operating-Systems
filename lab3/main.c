@@ -54,7 +54,7 @@ client(void *arg) {
             return NULL;
         }
 
-        DEBUG_PRINT("Length is %d\n", length);
+        // DEBUG_PRINT("Length is %d\n", length);
         memset(buf, 0, 64);
         /* Generate a random string in lowercase */
         for (j = 0; j < length; j += 6) {
@@ -76,14 +76,13 @@ client(void *arg) {
         }
 
         DEBUG_PRINT("Random string is %s\n", buf);
-
         switch (code % 3) {
             case 0: // Search
-                DEBUG_PRINT("Search\n");
+                DEBUG_PRINT("=== ThreadID: %lu - Search: '%s'\n", (long) pthread_self(), buf);
                 search(buf, length, NULL);
                 break;
             case 1: // insert
-                DEBUG_PRINT("insert\n");
+                DEBUG_PRINT("=== ThreadID: %lu - Insert: '%s'\n", (long) pthread_self(), buf);
                 rv = random_r(&rd, &ip4_addr);
                 if (rv) {
                     printf("Failed to get random number - %d\n", rv);
@@ -93,7 +92,7 @@ client(void *arg) {
                 insert(buf, length, ip4_addr);
                 break;
             case 2: // delete
-                DEBUG_PRINT("delete\n");
+                DEBUG_PRINT("=== ThreadID: %lu - Delete: '%s'\n", (long) pthread_self(), buf);
                 delete(buf, length);
                 break;
             default:

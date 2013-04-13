@@ -4,7 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "trie.h"
+
+#ifdef DEBUG_MUTEX
+#define PRINT(M, S) printf("---File: %s Line: %3d Thread: %u Method: %s %s\n", __FILE__, __LINE__, (int)pthread_self(), (M), (S));
+#else
+#define PRINT(M, S) 
+#endif
 
 struct trie_node {
     struct trie_node *next; /* parent list */
@@ -12,6 +19,7 @@ struct trie_node {
     int32_t ip4_address; /* 4 octets */
     struct trie_node *children; /* Sorted list of children */
     char key[64]; /* Up to 64 chars */
+    pthread_mutex_t mutex;
 };
 
 static struct trie_node * root = NULL;
@@ -30,6 +38,7 @@ struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_addre
     new_node->key[strlen] = '\0';
     new_node->ip4_address = ip4_address;
     new_node->children = NULL;
+    pthread_mutex_init( &(new_node->mutex), NULL);
 
     return new_node;
 }
@@ -46,9 +55,6 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
 }
 
 void init(int numthreads) {
-    if (numthreads != 1)
-        printf("WARNING: This Trie is only safe to use with one thread!!!  You have %d!!!\n", numthreads);
-
     root = NULL;
 }
 
@@ -58,14 +64,15 @@ void init(int numthreads) {
  * parent, or what should be the parent if not found.
  * 
  */
+
+
 struct trie_node *
 _search(struct trie_node *node, const char *string, size_t strlen) {
 
     int keylen, cmp;
 
-    // First things first, check if we are NULL 
+    // First things first, check if we are NULL k
     if (node == NULL) return NULL;
-
     assert(node->strlen < 64);
 
     // See if this key is a substring of the string passed in
@@ -75,21 +82,33 @@ _search(struct trie_node *node, const char *string, size_t strlen) {
 
         // If this key is longer than our search string, the key isn't here
         if (node->strlen > keylen) {
+            pthread_mutex_unlock(&(node->mutex));
             return NULL;
         } else if (strlen > keylen) {
             // Recur on children list
+            if(node->children != NULL)
+                pthread_mutex_lock(&(node->children->mutex));
+            pthread_mutex_unlock(&(node->mutex));
             return _search(node->children, string, strlen - keylen);
         } else {
             assert(strlen == keylen);
-
+            pthread_mutex_unlock(&(node->mutex));
             return node;
         }
 
     } else if (cmp < 0) {
         // No, look right (the node's key is "less" than the search key)
-        return _search(node->next, string, strlen);
+        if(node->next != NULL)
+            pthread_mutex_lock(&(node->next->mutex));
+        
+        struct trie_node *tri = _search(node->next, string, strlen);
+
+        pthread_mutex_unlock(&(node->mutex));
+
+        return tri;
     } else {
         // Quit early
+        pthread_mutex_unlock(&(node->mutex));
         return 0;
     }
 
@@ -99,8 +118,10 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
     struct trie_node *found;
 
     // Skip strings of length 0
-    if (strlen == 0)
+    if (strlen == 0 || root == NULL)
         return 0;
+
+    pthread_mutex_lock(&(root->mutex));
 
     found = _search(root, string, strlen);
 
@@ -242,7 +263,8 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     if (root == NULL) {
         root = new_leaf(string, strlen, ip4_address);
         return 1;
-    }
+    }    
+    pthread_mutex_lock(&(root->mutex));
     return _insert(string, strlen, ip4_address, root, NULL, NULL);
 }
 

@@ -296,11 +296,14 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             // Insert here
             struct trie_node *new_node = new_leaf(string, strlen, ip4_address);
             PRINT("_insert","locking root")
+            assert(root != NULL);
             pthread_mutex_lock(&(root->mutex));
             PRINT("_insert","locked root")
-            PRINT("_insert","locking parent")
-            pthread_mutex_lock(&(parent->mutex));
-            PRINT("_insert","locked parent")
+            if(parent != root){
+                PRINT("_insert","locking parent")
+                pthread_mutex_lock(&(parent->mutex));
+                PRINT("_insert","locked parent")
+            }
             new_node->next = node;
             if (node == root)
                 root = new_node;
@@ -309,9 +312,11 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             PRINT("_insert","unlocking root")
             pthread_mutex_unlock(&(root->mutex));
             PRINT("_insert","locked root")
-            PRINT("_insert","unlocking parent")
-            pthread_mutex_unlock(&(parent->mutex));
-            PRINT("_insert","locked parent")
+            if(parent != root){
+                PRINT("_insert","unlocking parent")
+                pthread_mutex_unlock(&(parent->mutex));
+                PRINT("_insert","locked parent")
+            }
         }
         PRINT("_insert","unlocking node")
         pthread_mutex_unlock(&(node->mutex));

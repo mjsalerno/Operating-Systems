@@ -167,17 +167,21 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             } else if ((!parent) || (!left)) {
                 root = new_node;
             }
+            pthread_mutex_unlock(&(node->mutex));
             return 1;
 
         } else if (strlen > keylen) {
 
             if (node->children == NULL) {
-                // Insert leaf here
+                // Insert leaf here                
                 struct trie_node *new_node = new_leaf(string, strlen - keylen, ip4_address);
                 node->children = new_node;
+                pthread_mutex_unlock(&(node->mutex));
                 return 1;
             } else {
                 // Recur on children list, store "parent" (loosely defined)
+                pthread_mutex_lock(&(node->children->mutex));
+                pthread_mutex_unlock(&(node->mutex));
                 return _insert(string, strlen - keylen, ip4_address,
                         node->children, node, NULL);
             }
@@ -185,9 +189,10 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             assert(strlen == keylen);
             if (node->ip4_address == 0) {
                 node->ip4_address = ip4_address;
+                pthread_mutex_unlock(&(node->mutex));
                 return 1;
             } else {
-                //SQUATTING----------------------------------------------------
+                //TODO: SQUATTING
                 return 0;
             }
         }
@@ -215,32 +220,43 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             assert((!parent) || (!left));
 
             if (node == root) {
-                new_node->next = node->next;
+                struct trie_node *next = node->next;
+                pthread_mutex_lock(&(next->mutex));
+                new_node->next = next;
                 node->next = NULL;
                 root = new_node;
+                pthread_mutex_unlock(&(next->mutex));
             } else if (parent) {
+                pthread_mutex_lock(&(parent->mutex));
                 assert(parent->children == node);
                 new_node->next = NULL;
                 parent->children = new_node;
+                pthread_mutex_unlock(&(parent->mutex));
             } else if (left) {
+                struct trie_node *next = node->next;
+                pthread_mutex_lock(&(next->mutex));
                 new_node->next = node->next;
                 node->next = NULL;
                 left->next = new_node;
+                pthread_mutex_unlock(&(next->mutex));
             } else if ((!parent) && (!left)) {
                 root = new_node;
             }
-
-            return _insert(string, i, ip4_address,
-                    node, new_node, NULL);
+            int result = _insert(string, i, ip4_address, node, new_node, NULL);
+            return result;
         } else if (cmp < 0) {
             if (node->next == NULL) {
                 // Insert here
                 struct trie_node *new_node = new_leaf(string, strlen, ip4_address);
                 node->next = new_node;
+                pthread_mutex_unlock(&(node->mutex));
                 return 1;
-            } else {
+            } else { //TODO: finish here
                 // No, recur right (the node's key is "greater" than  the search key)
-                return _insert(string, strlen, ip4_address, node->next, NULL, node);
+                int result;
+                result = _insert(string, strlen, ip4_address, node->next, NULL, node);
+                pthread_mutex_unlock(&());
+                return result;
             }
         } else {
             // Insert here

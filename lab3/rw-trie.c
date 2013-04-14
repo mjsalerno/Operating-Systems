@@ -19,7 +19,7 @@ static struct trie_node * root = NULL;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 static pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
-// static int volatile waiting = 0;
+static int volatile waiting = 0;
 static int threadCount;
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
@@ -263,9 +263,10 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
-    int result = 0, rc;
+    int result = 0;
     // Skip strings of length 0
-    if (strlen != 0) {
+    if (strlen > 0) {
+        int rc;
         // obtain the lock
         rc = pthread_rwlock_wrlock(&rwlock);
         assert(rc == 0);
@@ -279,16 +280,22 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
             assert(rc == 0);
             // Check to see if what we are trying to insert exists
             do {
-                printf("%lu ThreadID: %lu - Waiting to insert '%s'\n", time(NULL), (long) pthread_self(), string);
+                printf("ThreadID: %lu - Waiting to insert '%s'\n", (long) pthread_self(), string);
+                waiting++;
+                if(waiting == threadCount) {
+                    printf("\n=== All threads are now squatting. Waiting for the simulation to end. ===\n\n");
+                }
                 pthread_cond_wait(&condition, &mutex);
-                printf("%lu ThreadID: %lu - Awake\n", time(NULL), (long) pthread_self());
+                waiting--;
+                printf("ThreadID: %lu - Awake\n", (long) pthread_self());
             } while (squat_search(string, strlen, &ip4_address));
-            // re-aquire the rwlock
+            // So we are done sleeping get back the rwlock
             rc = pthread_rwlock_wrlock(&rwlock);
             assert(rc == 0);
-            // free the mutex used with the condition variable
+            // Give up the mutex lock
             rc = pthread_mutex_unlock(&mutex);
             assert(rc == 0);
+            //rwlock->mutex;
         }
 
         /* Edge case: root is null */
@@ -298,7 +305,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
         } else {
             result = _insert(string, strlen, ip4_address, root, NULL, NULL);
         }
-        printf("%lu ThreadID: %lu - insert '%s'\n", time(NULL), (long) pthread_self(), string);
+        printf("ThreadID: %lu - insert '%s'\n", (long) pthread_self(), string);
         // Unlock
         rc = pthread_rwlock_unlock(&rwlock);
         assert(rc == 0);
@@ -395,9 +402,10 @@ _delete(struct trie_node *node, const char *string,
 }
 
 int delete(const char *string, size_t strlen) {
-    int result = 0, rc;
+    int result = 0;
     // Skip strings of length 0
     if (strlen != 0) {
+        int rc;
         // Obtain the lock
         rc = pthread_rwlock_wrlock(&rwlock);
         assert(rc == 0);
@@ -406,7 +414,7 @@ int delete(const char *string, size_t strlen) {
 
         // if squatting is allowed and a key was deleted.
         if (allow_squatting && result) {
-            printf("%lu ThreadID: %lu - Broadcasting a delete on node %s\n", time(NULL), (long) pthread_self(), string);
+            printf("ThreadID: %lu - Broadcasting a delete on node %s\n", (long) pthread_self(), string);
             //pthread_cond_signal(&condition);
             rc = pthread_cond_broadcast(&condition);
             // Check to see if the broadcasr was successful

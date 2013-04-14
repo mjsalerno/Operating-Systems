@@ -262,14 +262,18 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             } else if (left) {
                 struct trie_node *next = node->next;
                 PRINT("_insert","locking node.next")
-                pthread_mutex_lock(&(next->mutex));
-                PRINT("_insert","locked node.next")
+                if(node->next != NULL){
+                    pthread_mutex_lock(&(next->mutex));
+                    PRINT("_insert","locked node.next")
+                }
                 new_node->next = node->next;
                 node->next = NULL;
                 left->next = new_node;
-                PRINT("_insert","unlocking node.next")
-                pthread_mutex_unlock(&(next->mutex));
-                PRINT("_insert","unlocked node.next")
+                if(next != NULL){
+                    PRINT("_insert","unlocking node.next")
+                    pthread_mutex_unlock(&(next->mutex));
+                    PRINT("_insert","unlocked node.next")
+                }
             } else if ((!parent) && (!left)) {
                 root = new_node;
             }
@@ -301,7 +305,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             //rc = pthread_mutex_lock(&(root->mutex));
             //assert(rc == 0);
             //PRINT("_insert","locked root")
-            if(parent != root){
+            if(parent != root && parent != NULL){
                 PRINT("_insert","locking parent")
                 pthread_mutex_lock(&(parent->mutex));
                 PRINT("_insert","locked parent")
@@ -311,10 +315,10 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 root = new_node;
             else if (parent && parent->children == node)
                 parent->children = new_node;
-            PRINT("_insert","unlocking root")
+            PRINT("_insert","unlocking root");
             pthread_mutex_unlock(&(root->mutex));
             PRINT("_insert","locked root")
-            if(parent != root){
+            if(parent != root && parent != NULL){
                 PRINT("_insert","unlocking parent")
                 pthread_mutex_unlock(&(parent->mutex));
                 PRINT("_insert","locked parent")

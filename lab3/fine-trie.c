@@ -56,7 +56,7 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
 }
 
 void init(int numthreads) {
-    root = NULL;
+    root = new_leaf("", 0, 0);
 }
 
 /* Recursive helper function.
@@ -330,17 +330,23 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     if (strlen == 0)
         return 0;
 
-    /* Edge case: root is null */
-    if (root == NULL) {
-        printf("Creating root\n");
-        root = new_leaf(string, strlen, ip4_address);
-        return 1;
-    }
     PRINT("insert","locking root")
     pthread_mutex_lock(&(root->mutex));
     PRINT("insert","locked root")
+
+    /* Edge case: root is null */
+    if (root->strlen == 0) {
+        printf("Creating root\n");
+        root = new_leaf(string, strlen, ip4_address);
+        PRINT("insert","unlocking root")
+        pthread_mutex_unlock(&(root->mutex));
+        PRINT("insert","unlocked root")
+        return 1;
+    }
+    
     printf("Creating child\n");
-    return _insert(string, strlen, ip4_address, root, NULL, NULL);
+    return _insert(string, strlen, ip4_address, root, NULL, NULL);;
+
 }
 
 /* Recursive helper function.

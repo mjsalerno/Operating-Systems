@@ -9,7 +9,7 @@
 #define DEBUG_MUTEX
 
 #ifdef DEBUG_MUTEX
-#define PRINT(M, S) printf("---File: %s Line: %3d Thread: %u Method: %s %s\n", __FILE__, __LINE__, (int)pthread_self(), (M), (S));
+#define PRINT(M, S, ...) printf("---File: %s Line: %3d Thread: %u Method: %s %s ", __FILE__, __LINE__, (int)pthread_self(), (M), (S)); printf(__VA_ARGS__);
 #else
 #define PRINT(M, S) 
 #endif
@@ -25,6 +25,25 @@ struct trie_node {
 
 static struct trie_node * root = NULL;
 static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER;
+static int lockCount = 0;
+
+int lock(trie_node *node, char *function, char *var, int *locksHeld){
+    int rv;
+    PRINT(function,var, "locking")
+    rv = pthread_mutex_lock(&(node->mutex));
+    (*locksHeld)--;
+    PRINT(function,var, "locked")
+    return rv;
+}
+
+int unLock(trie_node *node, char *function, char *var, int *locksHeld){
+    int rv;
+    PRINT(function,var, "unlocking")
+    rv = pthread_mutex_unlock(&(node->mutex));
+    (*locksHeld)--;
+    PRINT(function,var, "unlocked")
+    return rv;
+}
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
     struct trie_node *new_node = malloc(sizeof (struct trie_node));
@@ -135,7 +154,7 @@ int search(const char *string, size_t strlen, int32_t *ip4_address) {
 
 /* Recursive helper function */
 int _insert(const char *string, size_t strlen, int32_t ip4_address,
-        struct trie_node *node, struct trie_node *parent, struct trie_node *left) {
+        struct trie_node *node, struct trie_node *parent, struct trie_node *left, int *locksHeld) {
     PRINT("_insert", "entered the _insert method")
 
     int cmp, keylen;
@@ -172,6 +191,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             }
             PRINT("_insert","unlocking node")
             pthread_mutex_unlock(&(node->mutex));
+            (*locksHeld)--;
             PRINT("_insert","unlocked node")
             return 1;
 
@@ -183,13 +203,15 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 node->children = new_node;
                 PRINT("_insert","unlocking node")
                 pthread_mutex_unlock(&(node->mutex));
+                (*locksHeld)--;
                 PRINT("_insert","unlocked node")
                 return 1;
             } else {
                 // Recur on children list, store "parent" (loosely defined)
                 PRINT("_insert","locking node.children")
                 pthread_mutex_lock(&(node->children->mutex));
-                PRINT("_insert","unlocked node.children")
+                (*locksHeld)--;
+                PRINT("_insert","locked node.children")
                 PRINT("_insert","unlocking node")
                 pthread_mutex_unlock(&(node->mutex));
                 PRINT("_insert","unlocked node")

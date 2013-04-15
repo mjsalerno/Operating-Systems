@@ -131,9 +131,9 @@ squatter_stress(void *arg) {
     return NULL;
 }
 
-#define die(msg) do {               \
+#define die(msg) do {       \
   print();                  \
-  printf(msg);                  \
+  printf(msg);              \
   exit(1);                  \
   } while (0)
 

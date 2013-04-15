@@ -9,7 +9,8 @@
 #define DEBUG_MUTEX
 
 #ifdef DEBUG_MUTEX
-#define PRINT(M, S, ...) printf("---File: %s Line: %3d Thread: %u Method: %s %s ", __FILE__, __LINE__, (int)pthread_self(), (M), (S)); printf(__VA_ARGS__);
+#define PRINT(M, S, ...) printf("---File: %s Line: %3d Thread: %u Method: %s %s\n", __FILE__, __LINE__, (int)pthread_self(), (M), (S));
+#define PRINT_LOCK(M, S, L, ...) printf("---File: %s Line: %3d Thread: %u LocksHeld: %d Method: %s %s ", __FILE__, __LINE__, (int)pthread_self(), (L),(M), (S)); printf(__VA_ARGS__);printf("\n");
 #else
 #define PRINT(M, S) 
 #endif
@@ -25,24 +26,25 @@ struct trie_node {
 
 static struct trie_node * root = NULL;
 static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER;
-static int lockCount = 0;
 
-int lock(trie_node *node, char *function, char *var, int *locksHeld){
+void lock(struct trie_node *node, char *function, char *var, int *locksHeld){
     int rv;
-    PRINT(function,var, "locking")
+    assert(*locksHeld >= 0);
+    PRINT_LOCK(function,var, *locksHeld, "locking")
     rv = pthread_mutex_lock(&(node->mutex));
-    (*locksHeld)--;
-    PRINT(function,var, "locked")
-    return rv;
+    (*locksHeld)++;
+    PRINT_LOCK(function,var, *locksHeld, "locked")
+    assert(rv == 0);
 }
 
-int unLock(trie_node *node, char *function, char *var, int *locksHeld){
+void unlock(struct trie_node *node, char *function, char *var, int *locksHeld){
     int rv;
-    PRINT(function,var, "unlocking")
+    assert(*locksHeld >= 0);
+    PRINT_LOCK(function,var, *locksHeld, "unlocking")
     rv = pthread_mutex_unlock(&(node->mutex));
     (*locksHeld)--;
-    PRINT(function,var, "unlocked")
-    return rv;
+    PRINT_LOCK(function,var, *locksHeld, "unlocked")
+    assert(rv == 0);
 }
 
 struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_address) {
@@ -189,10 +191,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             } else if ((!parent) || (!left)) {
                 root = new_node;
             }
-            PRINT("_insert","unlocking node")
-            pthread_mutex_unlock(&(node->mutex));
-            (*locksHeld)--;
-            PRINT("_insert","unlocked node")
+            unlock(node, "_insert", "node", locksHeld);
             return 1;
 
         } else if (strlen > keylen) {
@@ -201,31 +200,20 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 // Insert leaf here                
                 struct trie_node *new_node = new_leaf(string, strlen - keylen, ip4_address);
                 node->children = new_node;
-                PRINT("_insert","unlocking node")
-                pthread_mutex_unlock(&(node->mutex));
-                (*locksHeld)--;
-                PRINT("_insert","unlocked node")
+                unlock(node, "_insert", "node", locksHeld);
                 return 1;
             } else {
                 // Recur on children list, store "parent" (loosely defined)
-                PRINT("_insert","locking node.children")
-                pthread_mutex_lock(&(node->children->mutex));
-                (*locksHeld)--;
-                PRINT("_insert","locked node.children")
-                PRINT("_insert","unlocking node")
-                pthread_mutex_unlock(&(node->mutex));
-                PRINT("_insert","unlocked node")
-
+                lock(node->children, "_insert", "node.children", locksHeld);
+                unlock(node, "_insert", "node", locksHeld);                
                 return _insert(string, strlen - keylen, ip4_address,
-                        node->children, node, NULL);
+                        node->children, node, NULL, locksHeld);
             }
         } else {
             assert(strlen == keylen);
             if (node->ip4_address == 0) {
                 node->ip4_address = ip4_address;
-                PRINT("_insert","unlocking node")
-                pthread_mutex_unlock(&(node->mutex));
-                PRINT("_insert","unlocked node")
+                unlock(node, "_insert", "node", locksHeld);
                 return 1;
             } else {
                 //TODO: SQUATTING
@@ -258,102 +246,74 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             if (node == root) {
                 struct trie_node *next = node->next;
                 if(next != NULL){
-                    PRINT("_insert","locking node.next")
-                    assert(next != NULL);
-                    pthread_mutex_lock(&(next->mutex));
-                    PRINT("_insert","locked node.next")
+                    lock(next, "_insert", "next", locksHeld);
                 }
                 new_node->next = next;
                 node->next = NULL;
                 root = new_node;
                 if(next != NULL){
-                    PRINT("_insert","unlocking node.next")
-                    pthread_mutex_unlock(&(next->mutex));
-                    PRINT("_insert","locked node.next")
+                    unlock(next, "_insert", "next", locksHeld);
                 }
             } else if (parent) {
-                PRINT("_insert","locking parent")
-                pthread_mutex_lock(&(parent->mutex));
-                PRINT("_insert","locked parent")
+                lock(parent, "_insert", "parent", locksHeld);
                 assert(parent->children == node);
                 new_node->next = NULL;
                 parent->children = new_node;
-                PRINT("_insert","unlocking parent")
-                pthread_mutex_unlock(&(parent->mutex));
-                PRINT("_insert","unlocked parent")
+                unlock(parent, "_insert", "parent", locksHeld);
             } else if (left) {
                 struct trie_node *next = node->next;
-                PRINT("_insert","locking node.next")
                 if(node->next != NULL){
-                    pthread_mutex_lock(&(next->mutex));
-                    PRINT("_insert","locked node.next")
+                    unlock(node->next, "_insert", "node.next", locksHeld);
                 }
                 new_node->next = node->next;
                 node->next = NULL;
                 left->next = new_node;
                 if(next != NULL){
-                    PRINT("_insert","unlocking node.next")
-                    pthread_mutex_unlock(&(next->mutex));
-                    PRINT("_insert","unlocked node.next")
+                    unlock(next, "_insert", "next", locksHeld);
                 }
             } else if ((!parent) && (!left)) {
                 root = new_node;
             }
-            int result = _insert(string, i, ip4_address, node, new_node, NULL);
+            int result = _insert(string, i, ip4_address, node, new_node, NULL, locksHeld);
             return result;
         } else if (cmp < 0) {
             if (node->next == NULL) {
                 // Insert here
                 struct trie_node *new_node = new_leaf(string, strlen, ip4_address);
                 node->next = new_node;
-                PRINT("_insert","unlocking node")
-                pthread_mutex_unlock(&(node->mutex));
-                PRINT("_insert","unlocked node")
+                unlock(node, "_insert", "node", locksHeld);
                 return 1;
             } else {
                 // No, recur right (the node's key is "greater" than  the search key)
                 int result;
-                result = _insert(string, strlen, ip4_address, node->next, NULL, node);
-                PRINT("_insert","unlocking node")
-                pthread_mutex_unlock(&(node->mutex));
-                PRINT("_insert","unlocked node")
+                result = _insert(string, strlen, ip4_address, node->next, NULL, node, locksHeld);
+                unlock(node, "_insert", "node", locksHeld);
                 return result;
             }
         } else {
             // Insert here
             struct trie_node *new_node = new_leaf(string, strlen, ip4_address);
-            //PRINT("_insert","locking root")
             assert(root != NULL);
-            //rc = pthread_mutex_lock(&(root->mutex));
-            //assert(rc == 0);
-            //PRINT("_insert","locked root")
             if(parent != root && parent != NULL){
-                PRINT("_insert","locking parent")
-                pthread_mutex_lock(&(parent->mutex));
-                PRINT("_insert","locked parent")
+                unlock(parent, "_insert", "parent", locksHeld);
             }
             new_node->next = node;
             if (node == root)
                 root = new_node;
             else if (parent && parent->children == node)
                 parent->children = new_node;
-            PRINT("_insert","unlocking root");
-            pthread_mutex_unlock(&(root->mutex));
-            PRINT("_insert","locked root")
+            unlock(root, "_insert", "root", locksHeld);
             if(parent != root && parent != NULL){
-                PRINT("_insert","unlocking parent")
-                pthread_mutex_unlock(&(parent->mutex));
-                PRINT("_insert","locked parent")
+                unlock(parent, "_insert", "parent", locksHeld);
             }
         }
-        PRINT("_insert","unlocking node")
-        pthread_mutex_unlock(&(node->mutex));
-        PRINT("_insert","unlocked node")
+        unlock(node, "_insert", "node", locksHeld);
         return 1;
     }
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
+    int locksHeld = 0;
     // Skip strings of length 0
     if (strlen == 0)
         return 0;
@@ -361,6 +321,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     printf("########INSERTING: %s\n", string);
 
     PRINT("insert","locking rootMutex")
+    locksHeld++;
     pthread_mutex_lock(&rootMutex);
     PRINT("insert","locked rootMutex")    
 
@@ -369,6 +330,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
         printf("Creating root\n");
         root = new_leaf(string, strlen, ip4_address);
         PRINT("insert","unlocking rootMutex")
+        locksHeld--;
         pthread_mutex_unlock(&rootMutex);
         PRINT("insert","unlocked rootMutex")
         return 1;
@@ -376,14 +338,13 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     
     PRINT("insert","unlocking rootMutex")
     pthread_mutex_unlock(&rootMutex);
+    locksHeld--;
     PRINT("insert","unlocked rootMutex")
 
-    PRINT("insert","locking root")
-    pthread_mutex_lock(&(root->mutex));
-    PRINT("insert","locked root")
+    lock(root, "insert", "root", &locksHeld);
 
     printf("Creating child\n");
-    return _insert(string, strlen, ip4_address, root, NULL, NULL);;
+    return _insert(string, strlen, ip4_address, root, NULL, NULL, &locksHeld);
 
 }
 

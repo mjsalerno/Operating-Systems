@@ -371,104 +371,159 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
  * 
  */
 struct trie_node *
-_delete(struct trie_node *node, const char *string,
-        size_t strlen) {
-    int keylen, cmp;
-
-    // First things first, check if we are NULL 
-    if (node == NULL) return NULL;
-
-    assert(node->strlen < 64);
-
-    // See if this key is a substring of the string passed in
-    cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
-    if (cmp == 0) {
-        // Yes, either quit, or recur on the children
-
-        // If this key is longer than our search string, the key isn't here
-        if (node->strlen > keylen) {
-            return NULL;
-        } else if (strlen > keylen) {
-            struct trie_node *found = _delete(node->children, string, strlen - keylen);
-            if (found) {
-                /* If the node doesn't have children, delete it.
-                 * Otherwise, keep it around to find the kids */
-                if (found->children == NULL && found->ip4_address == 0) {
-                    assert(node->children == found);
-                    node->children = found->next;
+_delete(struct trie_node *node, struct trie_node *parentNode, const char *string,
+        size_t strlen, int *locksHeld, int *depth) {
+    struct trie_node *result = NULL;
+    (*depth)++;
+    printf("Recursive call # %d\n", *depth);
+    // If the node is null just return it.
+    if(node != NULL) 
+    {
+        int keylen, cmp/*, next = 0, children = 0*/;
+        // Since we got here rember that there is a lock held above us from the
+        // parent call.
+        assert(node->strlen < 64);
+        // See if this key is a substring of the string passed in.
+        cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
+        // If cmp == 0 quit, ot recur on the children.
+        if(cmp == 0) 
+        {
+            if(node->strlen > keylen) 
+            {
+                result = NULL;
+            } 
+            else if(strlen > keylen) 
+            {
+                lock(node->children, "_delete", "node->children", __LINE__, locksHeld);
+                // unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
+                // Perform a recursive delete
+                struct trie_node *found = _delete(node->children, node,string, strlen - keylen, locksHeld, depth);
+                if(found) 
+                {
+                    /* If the node doesn't have children, delete it.
+                     * otherwise, keep it around to find the kids. */
+                    if(found->children == NULL && found->ip4_address == 0) 
+                    {
+                        assert(node->children == found);
+                        node->children = found->next;
+                        unlock(found, "_delete", "found", __LINE__, locksHeld);
+                        free(found);
+                    }
+                    /* delete the root node if we empty the tree */  
+                    else if(node == root && node->children == NULL && node->ip4_address == 0) 
+                    {
+                        root = node->next;
+                        unlock(found, "_delete", "found", __LINE__, locksHeld);
+                        free(found);
+                    }
+                    else
+                    {
+                        unlock(node->children, "_delete", "node->children", __LINE__, locksHeld);
+                    }
+                    result = node; /* recursivly delete needless interior nodes */
+                } 
+                else 
+                {
+                    unlock(node->children, "_delete", "node->children", __LINE__, locksHeld);
+                    result = NULL;
+                }
+            } 
+            else 
+            {
+                assert(strlen == keylen);
+                /* We found it! Clear the ip4 address and return. */
+                if(node->ip4_address) 
+                {
+                    node->ip4_address = 0;
+                    /* Delete the root node if we empty the tree */
+                    if(node == root && node->children == NULL && node->ip4_address == 0) 
+                    {
+                        root = node->next;
+                        // Relase the current nodes lock.
+                        unlock(node, "_delete", "node", __LINE__, locksHeld);
+                        free(node);
+                        result = (struct trie_node*) 0x100100;
+                        /* XXX: Don't use this pointer for anything except 
+                         * comparison with NULL, since the memory is freed.
+                         * Return a "poison" pointer that will probably 
+                         * segfault if used.
+                         */
+                    } else {
+                        result = node;
+                    }
+                }
+                else
+                {
+                    result = NULL;
+                }
+            }
+        } 
+        else if(cmp < 0) 
+        {
+            lock(node->next, "_delete", "node->next", __LINE__, locksHeld);
+            // unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
+            // Pass in this the node->next as node and node as parentNode
+            struct trie_node *found = _delete(node->next, node, string, strlen, locksHeld, depth);
+            if(found) 
+            {
+                // if the node does not have children delete it.
+                // Otherwise, keep it around to find its children
+                if(found->children == NULL && found->ip4_address == 0) 
+                {
+                    assert(node->next == found);
+                    node->next = found->next;
+                    unlock(found, "_delete", "found", __LINE__, locksHeld);
                     free(found);
                 }
-
-                /* Delete the root node if we empty the tree */
-                if (node == root && node->children == NULL && node->ip4_address == 0) {
-                    root = node->next;
-                    free(node);
+                else 
+                {
+                    unlock(node->next, "_delete", "node->next", __LINE__, locksHeld);       
                 }
-
-                return node; /* Recursively delete needless interior nodes */
-            } else
-                return NULL;
+                result = node; // Recursivly delete needless interior nodes    
+            }
+            else 
+            {
+                unlock(node->next, "_delete", "node->next", __LINE__, locksHeld);
+                result = NULL;    
+            }
+        }
+        else
+        {
+            printf("Quit early\n");
+            result = NULL; // Quit early.
+        }
+        printf("Current depth %d @ %d\n", *depth, __LINE__);
+        if(*depth == 1 && *locksHeld > 0) {
+            unlock(node, "_delete", "node", __LINE__, locksHeld);
         } else {
-            assert(strlen == keylen);
-
-            /* We found it! Clear the ip4 address and return. */
-            if (node->ip4_address) {
-                node->ip4_address = 0;
-
-                /* Delete the root node if we empty the tree */
-                if (node == root && node->children == NULL && node->ip4_address == 0) {
-                    root = node->next;
-                    free(node);
-                    return (struct trie_node *) 0x100100; /* XXX: Don't use this pointer for anything except 
-             * comparison with NULL, since the memory is freed.
-             * Return a "poison" pointer that will probably 
-             * segfault if used.
-             */
-                }
-                return node;
-            } else {
-                /* Just an interior node with no value */
-                return NULL;
-            }
+            //unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
         }
-
-    } else if (cmp < 0) {
-        // No, look right (the node's key is "less" than  the search key)
-        struct trie_node *found = _delete(node->next, string, strlen);
-        if (found) {
-            /* If the node doesn't have children, delete it.
-             * Otherwise, keep it around to find the kids */
-            if (found->children == NULL && found->ip4_address == 0) {
-                assert(node->next == found);
-                node->next = found->next;
-                free(found);
-            }
-
-            return node; /* Recursively delete needless interior nodes */
-        }
-        return NULL;
     } else {
-        // Quit early
-        return NULL;
+        // Check to see if we have travered far into
+        if(*depth == 1) {
+            unlock(node, "_delete", "node", __LINE__, locksHeld);
+        }
     }
-
+    (*depth)--;
+    return result;
 }
 
 int delete(const char *string, size_t strlen) {
+    int result = 0, locksHeld = 0, depth = 0;
     // Skip strings of length 0
-    if (strlen == 0)
-        return 0;
-
-    return (NULL != _delete(root, string, strlen));
-}
-
-void _print(struct trie_node *node) {
-    printf("Node at %p.  Key %.*s, IP %d.  Next %p, Children %p\n",
-            node, node->strlen, node->key, node->ip4_address, node->next, node->children);
-    if (node->children)
-        _print(node->children);
-    if (node->next)
-        _print(node->next);
+    if (strlen == 0 || root == NULL) {
+        if(strlen == 0) printf("Strlen == 0\n");
+        else printf("Root is null\n");
+        return result;
+    }
+    printf("Delete node containing %s\n", string);
+    // Since the root is not null aquire its lock.
+    lock(root, "delete", "root", __LINE__, &locksHeld);
+    // Store the result of the deletion in result; Parent node of root is null.
+    result = (NULL != _delete(root, NULL, string, strlen, &locksHeld, &depth));
+    if(locksHeld != 0) printf("%d lock(s) are held.\n", locksHeld);
+    assert(locksHeld == 0); 
+    return result;
 }
 
 void print() {

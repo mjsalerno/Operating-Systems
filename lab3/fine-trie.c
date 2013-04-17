@@ -526,6 +526,15 @@ int delete(const char *string, size_t strlen) {
     return result;
 }
 
+void _print(struct trie_node *node) {
+    printf("Node at %p.  Key %.*s, IP %d.  Next %p, Children %p\n",
+            node, node->strlen, node->key, node->ip4_address, node->next, node->children);
+    if (node->children)
+        _print(node->children);
+    if (node->next)
+        _print(node->next);
+}
+
 void print() {
     printf("Root is at %p\n", root);
     /* Do a simple depth-first search */

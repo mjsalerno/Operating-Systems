@@ -10,9 +10,10 @@
 
 #ifdef DEBUG_MUTEX
 #define PRINT(M, S, ...) printf("---File: %s Line: %3d Thread: %u Method: %s %s\n", __FILE__, __LINE__, (int)pthread_self(), (M), (S));
-#define PRINT_LOCK(M, S, L, Line, at, ...) printf("---Line: %3d T: %u LH: %d AT: %d : %s %s ", (Line), (int)pthread_self(), (L), (at), (M), (S)); printf(__VA_ARGS__);printf("\n");
+#define PRINT_LOCK(M, S, L, Line, at, ...) printf("---Line: %3d T: %u LH: %d AT: %lu : %s %s ", (Line), (int)pthread_self(), (L), (at), (M), (S)); printf(__VA_ARGS__);printf("\n");
 #else
 #define PRINT(M, S) 
+#define PRINT_LOCK(M, S, L, Line, at, ...)
 #endif
 
 struct trie_node {
@@ -30,21 +31,21 @@ static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER;
 void lock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
     int rv;
     assert(*locksHeld >= 0);
-    PRINT_LOCK(function,var, *locksHeld, line, (int)node,"locking")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "locking")
     rv = pthread_mutex_lock(&(node->mutex));
     (*locksHeld)++;
-    PRINT_LOCK(function,var, *locksHeld, line, (int)node,"locked")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "locked")
     assert(rv == 0);
 }
 
 void unlock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
     int rv;
     assert(*locksHeld >= 0);
-    PRINT_LOCK(function,var, *locksHeld, line, (int)node, "unlocking")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "unlocking")
     rv = pthread_mutex_unlock(&(node->mutex));
     (*locksHeld)--;
     if(*locksHeld < 0) locksHeld = 0;
-    PRINT_LOCK(function,var, *locksHeld, line, (int)node,"unlocked")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "unlocked")
     assert(rv == 0);
 }
 
@@ -358,7 +359,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     result = _insert(string, strlen, ip4_address, root, NULL, NULL, &locksHeld);
     assert(toor != NULL);
     printf("got before toor\n");
-    if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
+    //if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
     assert(locksHeld == 0);
     return result;
 

@@ -22,11 +22,14 @@ struct trie_node {
     int32_t ip4_address; /* 4 octets */
     struct trie_node *children; /* Sorted list of children */
     char key[64]; /* Up to 64 chars */
-    pthread_mutex_t mutex;
+    pthread_mutex_t mutex; /*Put mutex in node for easy tracking*/
 };
 
-static struct trie_node * root = NULL;
-static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER;
+static struct trie_node * root = NULL; 
+static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER; // mutex for root so multiple threadss
+                                                              // do not try and add a root at the same time
+                                                              // needed since root can be null and there will 
+                                                              //be nothing to lock
 
 /**
  * Performs a lock and adds to the counter how many nodes are locked.
@@ -339,7 +342,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 }
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
-    int locksHeld = 0;
+    int locksHeld = 0; // easy to track errors if this is not 0 at the end
     int result;
     struct trie_node *toor = root; //holding root for laeter unlocking
     // Skip strings of length 0
@@ -348,10 +351,10 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
 
     printf("########INSERTING: %s\n", string);
 
-    PRINT("insert","locking rootMutex")
+    PRINT("insert","locking rootMutex") //lock so other threads cant add a root while this is
     locksHeld++;
     pthread_mutex_lock(&rootMutex);
-    PRINT("insert","locked rootMutex")    
+    PRINT("insert","locked rootMutex")
 
     /* Edge case: root is null */
     if (root == NULL) {
@@ -371,7 +374,6 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
 
     lock(root, "insert", "root", __LINE__, &locksHeld);
 
-    printf("Creating child\n");
     result = _insert(string, strlen, ip4_address, root, NULL, NULL, &locksHeld);
     assert(toor != NULL);
     if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);

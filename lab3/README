@@ -3,3 +3,16 @@ file should describe what you did, what approach you took, results of any
 measurements you made, which files are included in your submission and what
 they are for, etc.  Feel free to include any other information you think is
 helpful to us in this README; it can only help your grade.
+
+
+mutex-trie: make a static mutex. every time a thread wanted to read or write to 
+node try to lock the mutex. once job is finished unlock the mutex. 
+
+rw-trie: made a static rw lock. if a thread only wants to read from a node
+get a read lock if a thread wants to write to a node then get a write lock
+once task is done unlock the lock
+
+fine-trie: created a mutex in the node struct. everytime a thread passed over the 
+node to read/write, get the lock. each thread while travilling the trie always has a 
+of the node it is looking at and its parent and "walks down the trie"
+release locks when task is complete

@@ -214,11 +214,13 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 unlock(node, "_insert", "node", __LINE__, locksHeld);
                 return 1;
             } else {
+                int result;
                 // Recur on children list, store "parent" (loosely defined)
-                lock(node->children, "_insert", "node.children", __LINE__, locksHeld);
-                unlock(node, "_insert", "node", __LINE__, locksHeld);                
-                return _insert(string, strlen - keylen, ip4_address,
+                lock(node->children, "_insert", "node.children", __LINE__, locksHeld);                                
+                result = _insert(string, strlen - keylen, ip4_address,
                         node->children, node, NULL, locksHeld);
+                unlock(node, "_insert", "node", __LINE__, locksHeld);
+                return result;
             }
         } else {
             assert(strlen == keylen);
@@ -249,6 +251,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
         if (overlap) {
             // Insert a common parent, recur
             struct trie_node *new_node = new_leaf(&string[i], strlen - i, 0);
+            unlock(new_node, "_insert", "new_node", __LINE__, locksHeld);
             int diff = node->strlen - i;
             assert((node->strlen - diff) > 0);
             node->strlen -= diff;
@@ -275,7 +278,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             } else if (left) {
                 struct trie_node *next = node->next;
                 if(node->next != NULL){
-                    unlock(node->next, "_insert", "node.next", __LINE__, locksHeld);
+                    lock(node->next, "_insert", "node.next", __LINE__, locksHeld);
                 }
                 new_node->next = node->next;
                 node->next = NULL;
@@ -287,6 +290,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 root = new_node;
             }
             int result = _insert(string, i, ip4_address, node, new_node, NULL, locksHeld);
+            unlock(new_node, "_insert", "node", __LINE__, locksHeld);
             return result;
         } else if (cmp < 0) {
             if (node->next == NULL) {
@@ -296,9 +300,12 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 unlock(node, "_insert", "node", __LINE__, locksHeld);
                 return 1;
             } else {
+                if(node->next != NULL)
+                    lock(node->next, "_insert", "node.next", __LINE__, locksHeld);
                 // No, recur right (the node's key is "greater" than  the search key)
                 int result;
                 result = _insert(string, strlen, ip4_address, node->next, NULL, node, locksHeld);
+                unlock(node->next, "_insert", "node.next", __LINE__, locksHeld);
                //assert(node != NULL);
                     //unlock(node, "_insert", "node", __LINE__, locksHeld);
                 return result;
@@ -317,6 +324,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 parent->children = new_node;
             assert(root != NULL);
             unlock(root, "_insert", "root", __LINE__, locksHeld);
+            unlock(node, "_insert", "node", __LINE__, locksHeld);
             if(parent != root && parent != NULL){
                 unlock(parent, "_insert", "parent", __LINE__, locksHeld);
             }
@@ -366,8 +374,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
     printf("Creating child\n");
     result = _insert(string, strlen, ip4_address, root, NULL, NULL, &locksHeld);
     assert(toor != NULL);
-    printf("got before toor\n");
-    //if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
+    if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
     assert(locksHeld == 0);
     return result;
 

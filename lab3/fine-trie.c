@@ -25,23 +25,23 @@ struct trie_node {
     pthread_mutex_t mutex; /*Put mutex in node for easy tracking*/
 };
 
-static struct trie_node * root = NULL; 
+static struct trie_node * root = NULL;
 static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER; // mutex for root so multiple threadss
-                                                              // do not try and add a root at the same time
-                                                              // needed since root can be null and there will 
-                                                              //be nothing to lock
+// do not try and add a root at the same time
+// needed since root can be null and there will 
+//be nothing to lock
 
 /**
  * Performs a lock and adds to the counter how many nodes are locked.
  * Performs an assertion on the number of locks held to make sure we dont have a negative amount of locks.
  */
-void lock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
+void lock(struct trie_node *node, char *function, char *var, int line, int *locksHeld) {
     int rv;
     assert(*locksHeld >= 0);
-    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "locking")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long) node, "locking")
     rv = pthread_mutex_lock(&(node->mutex));
     (*locksHeld)++;
-    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "locked")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long) node, "locked")
     assert(rv == 0);
 }
 
@@ -49,14 +49,14 @@ void lock(struct trie_node *node, char *function, char *var, int line, int *lock
  * Performs an unlock and reduces the counter keeping track of the locked nodes.
  * Performs an assertion on the number of locks held to make sure we dont have a negative amount of locks.
  */
-void unlock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
+void unlock(struct trie_node *node, char *function, char *var, int line, int *locksHeld) {
     int rv;
     assert(*locksHeld >= 0);
-    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "unlocking")
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long) node, "unlocking")
     rv = pthread_mutex_unlock(&(node->mutex));
     (*locksHeld)--;
-    if(*locksHeld < 0) locksHeld = 0;
-    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long)node, "unlocked")
+    if (*locksHeld < 0) locksHeld = 0;
+    PRINT_LOCK(function, var, *locksHeld, line, (unsigned long) node, "unlocked")
     assert(rv == 0);
 }
 
@@ -74,7 +74,7 @@ struct trie_node * new_leaf(const char *string, size_t strlen, int32_t ip4_addre
     new_node->key[strlen] = '\0';
     new_node->ip4_address = ip4_address;
     new_node->children = NULL;
-    pthread_mutex_init( &(new_node->mutex), NULL);
+    pthread_mutex_init(&(new_node->mutex), NULL);
 
     return new_node;
 }
@@ -90,7 +90,7 @@ int compare_keys(const char *string1, int len1, const char *string2, int len2, i
     return strncmp(&string1[offset1], &string2[offset2], keylen);
 }
 
-void init(int numthreads) {    
+void init(int numthreads) {
     root = NULL;
 }
 
@@ -122,7 +122,7 @@ _search(struct trie_node *node, const char *string, size_t strlen, int *locksHel
             return NULL;
         } else if (strlen > keylen) {
             // Recur on children list
-            if(node->children != NULL)
+            if (node->children != NULL)
                 lock(node->children, "_search", "node.children", __LINE__, locksHeld);
             unlock(node, "_search", "node", __LINE__, locksHeld);
             return _search(node->children, string, strlen - keylen, locksHeld);
@@ -134,9 +134,9 @@ _search(struct trie_node *node, const char *string, size_t strlen, int *locksHel
 
     } else if (cmp < 0) {
         // No, look right (the node's key is "less" than the search key)
-        if(node->next != NULL)
+        if (node->next != NULL)
             lock(node->next, "_search", "node.next", __LINE__, locksHeld);
-        
+
         struct trie_node *tri = _search(node->next, string, strlen, locksHeld);
 
         unlock(node, "_search", "node", __LINE__, locksHeld);
@@ -173,7 +173,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
         struct trie_node *node, struct trie_node *parent, struct trie_node *left, int *locksHeld) {
     PRINT("_insert", "entered the _insert method")
 
-    int cmp, keylen;
+            int cmp, keylen;
 
     // First things first, check if we are NULL 
     assert(node != NULL);
@@ -188,7 +188,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
         // "above" this node
         if (node->strlen > keylen) {
             struct trie_node *new_node;
-            
+
             assert(keylen == strlen);
             assert((!parent) || parent->children == node);
 
@@ -219,7 +219,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             } else {
                 int result;
                 // Recur on children list, store "parent" (loosely defined)
-                lock(node->children, "_insert", "node.children", __LINE__, locksHeld);                                
+                lock(node->children, "_insert", "node.children", __LINE__, locksHeld);
                 result = _insert(string, strlen - keylen, ip4_address,
                         node->children, node, NULL, locksHeld);
                 unlock(node, "_insert", "node", __LINE__, locksHeld);
@@ -263,30 +263,30 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 
             if (node == root) {
                 struct trie_node *next = node->next;
-                if(next != NULL){
+                if (next != NULL) {
                     lock(next, "_insert", "next", __LINE__, locksHeld);
                 }
                 new_node->next = next;
                 node->next = NULL;
                 root = new_node;
-                if(next != NULL){
+                if (next != NULL) {
                     unlock(next, "_insert", "next", __LINE__, locksHeld);
                 }
             } else if (parent) {
-                lock(parent, "_insert", "parent",__LINE__, locksHeld);
+                lock(parent, "_insert", "parent", __LINE__, locksHeld);
                 assert(parent->children == node);
                 new_node->next = NULL;
                 parent->children = new_node;
                 unlock(parent, "_insert", "parent", __LINE__, locksHeld);
             } else if (left) {
                 struct trie_node *next = node->next;
-                if(node->next != NULL){
+                if (node->next != NULL) {
                     lock(node->next, "_insert", "node.next", __LINE__, locksHeld);
                 }
                 new_node->next = node->next;
                 node->next = NULL;
                 left->next = new_node;
-                if(next != NULL && *locksHeld > 0){
+                if (next != NULL && *locksHeld > 0) {
                     unlock(next, "_insert", "next", __LINE__, locksHeld);
                 }
             } else if ((!parent) && (!left)) {
@@ -303,21 +303,21 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
                 unlock(node, "_insert", "node", __LINE__, locksHeld);
                 return 1;
             } else {
-                if(node->next != NULL)
+                if (node->next != NULL)
                     lock(node->next, "_insert", "node.next", __LINE__, locksHeld);
                 // No, recur right (the node's key is "greater" than  the search key)
                 int result;
                 result = _insert(string, strlen, ip4_address, node->next, NULL, node, locksHeld);
                 unlock(node->next, "_insert", "node.next", __LINE__, locksHeld);
-               //assert(node != NULL);
-                    //unlock(node, "_insert", "node", __LINE__, locksHeld);
+                //assert(node != NULL);
+                //unlock(node, "_insert", "node", __LINE__, locksHeld);
                 return result;
             }
         } else {
             // Insert here
             struct trie_node *new_node = new_leaf(string, strlen, ip4_address);
             assert(root != NULL);
-            if(parent != root && parent != NULL){
+            if (parent != root && parent != NULL) {
                 unlock(parent, "_insert", "parent", __LINE__, locksHeld);
             }
             new_node->next = node;
@@ -328,11 +328,11 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
             assert(root != NULL);
             unlock(root, "_insert", "root", __LINE__, locksHeld);
             unlock(node, "_insert", "node", __LINE__, locksHeld);
-            if(parent != root && parent != NULL){
+            if (parent != root && parent != NULL) {
                 unlock(parent, "_insert", "parent", __LINE__, locksHeld);
             }
         }
-        if(*locksHeld > 0){
+        if (*locksHeld > 0) {
             assert(node != NULL);
             unlock(node, "_insert", "node", __LINE__, locksHeld);
         }
@@ -351,32 +351,32 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
 
     printf("########INSERTING: %s\n", string);
 
-    PRINT("insert","locking rootMutex") //lock so other threads cant add a root while this is
+    PRINT("insert", "locking rootMutex") //lock so other threads cant add a root while this is
     locksHeld++;
     pthread_mutex_lock(&rootMutex);
-    PRINT("insert","locked rootMutex")
+    PRINT("insert", "locked rootMutex")
 
-    /* Edge case: root is null */
+            /* Edge case: root is null */
     if (root == NULL) {
         printf("Creating root\n");
         root = new_leaf(string, strlen, ip4_address);
-        PRINT("insert","unlocking rootMutex")
+        PRINT("insert", "unlocking rootMutex")
         locksHeld--;
         pthread_mutex_unlock(&rootMutex);
-        PRINT("insert","unlocked rootMutex")
+        PRINT("insert", "unlocked rootMutex")
         return 1;
     }
-    
-    PRINT("insert","unlocking rootMutex")
+
+    PRINT("insert", "unlocking rootMutex")
     pthread_mutex_unlock(&rootMutex);
     locksHeld--;
-    PRINT("insert","unlocked rootMutex")
+    PRINT("insert", "unlocked rootMutex")
 
     lock(root, "insert", "root", __LINE__, &locksHeld);
 
     result = _insert(string, strlen, ip4_address, root, NULL, NULL, &locksHeld);
     assert(toor != NULL);
-    if(toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
+    if (toor != NULL) unlock(toor, "insert", "toor", __LINE__, &locksHeld);
     assert(locksHeld == 0);
     return result;
 
@@ -395,8 +395,7 @@ _delete(struct trie_node *node, struct trie_node *parentNode, const char *string
     (*depth)++;
     printf("Recursive call # %d\n", *depth);
     // If the node is null just return it.
-    if(node != NULL) 
-    {
+    if (node != NULL) {
         int keylen, cmp/*, next = 0, children = 0*/;
         // Since we got here rember that there is a lock held above us from the
         // parent call.
@@ -404,58 +403,45 @@ _delete(struct trie_node *node, struct trie_node *parentNode, const char *string
         // See if this key is a substring of the string passed in.
         cmp = compare_keys(node->key, node->strlen, string, strlen, &keylen);
         // If cmp == 0 quit, ot recur on the children.
-        if(cmp == 0) 
-        {
-            if(node->strlen > keylen) 
-            {
+        if (cmp == 0) {
+            if (node->strlen > keylen) {
                 result = NULL;
-            } 
-            else if(strlen > keylen) 
-            {
+            }
+            else if (strlen > keylen) {
                 lock(node->children, "_delete", "node->children", __LINE__, locksHeld);
                 // unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
                 // Perform a recursive delete
-                struct trie_node *found = _delete(node->children, node,string, strlen - keylen, locksHeld, depth);
-                if(found) 
-                {
+                struct trie_node *found = _delete(node->children, node, string, strlen - keylen, locksHeld, depth);
+                if (found) {
                     /* If the node doesn't have children, delete it.
                      * otherwise, keep it around to find the kids. */
-                    if(found->children == NULL && found->ip4_address == 0) 
-                    {
+                    if (found->children == NULL && found->ip4_address == 0) {
                         assert(node->children == found);
                         node->children = found->next;
                         unlock(found, "_delete", "found", __LINE__, locksHeld);
                         free(found);
-                    }
-                    /* delete the root node if we empty the tree */  
-                    else if(node == root && node->children == NULL && node->ip4_address == 0) 
-                    {
+                    }                        /* delete the root node if we empty the tree */
+                    else if (node == root && node->children == NULL && node->ip4_address == 0) {
                         root = node->next;
                         unlock(found, "_delete", "found", __LINE__, locksHeld);
                         free(found);
-                    }
-                    else
-                    {
+                    } else {
                         unlock(node->children, "_delete", "node->children", __LINE__, locksHeld);
                     }
                     result = node; /* recursivly delete needless interior nodes */
-                } 
-                else 
-                {
+                }
+                else {
                     unlock(node->children, "_delete", "node->children", __LINE__, locksHeld);
                     result = NULL;
                 }
-            } 
-            else 
-            {
+            }
+            else {
                 assert(strlen == keylen);
                 /* We found it! Clear the ip4 address and return. */
-                if(node->ip4_address) 
-                {
+                if (node->ip4_address) {
                     node->ip4_address = 0;
                     /* Delete the root node if we empty the tree */
-                    if(node == root && node->children == NULL && node->ip4_address == 0) 
-                    {
+                    if (node == root && node->children == NULL && node->ip4_address == 0) {
                         root = node->next;
                         // Relase the current nodes lock.
                         unlock(node, "_delete", "node", __LINE__, locksHeld);
@@ -469,56 +455,45 @@ _delete(struct trie_node *node, struct trie_node *parentNode, const char *string
                     } else {
                         result = node;
                     }
-                }
-                else
-                {
+                } else {
                     result = NULL;
                 }
             }
-        } 
-        else if(cmp < 0) 
-        {
+        }
+        else if (cmp < 0) {
             lock(node->next, "_delete", "node->next", __LINE__, locksHeld);
             // unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
             // Pass in this the node->next as node and node as parentNode
             struct trie_node *found = _delete(node->next, node, string, strlen, locksHeld, depth);
-            if(found) 
-            {
+            if (found) {
                 // if the node does not have children delete it.
                 // Otherwise, keep it around to find its children
-                if(found->children == NULL && found->ip4_address == 0) 
-                {
+                if (found->children == NULL && found->ip4_address == 0) {
                     assert(node->next == found);
                     node->next = found->next;
                     unlock(found, "_delete", "found", __LINE__, locksHeld);
                     free(found);
-                }
-                else 
-                {
-                    unlock(node->next, "_delete", "node->next", __LINE__, locksHeld);       
+                } else {
+                    unlock(node->next, "_delete", "node->next", __LINE__, locksHeld);
                 }
                 result = node; // Recursivly delete needless interior nodes    
-            }
-            else 
-            {
+            } else {
                 unlock(node->next, "_delete", "node->next", __LINE__, locksHeld);
-                result = NULL;    
+                result = NULL;
             }
-        }
-        else
-        {
+        } else {
             printf("Quit early\n");
             result = NULL; // Quit early.
         }
         printf("Current depth %d @ %d\n", *depth, __LINE__);
-        if(*depth == 1 && *locksHeld > 0) {
+        if (*depth == 1 && *locksHeld > 0) {
             unlock(node, "_delete", "node", __LINE__, locksHeld);
         } else {
             //unlock(parentNode, "_delete", "parentNode", __LINE__, locksHeld);
         }
     } else {
         // Check to see if we have travered far into
-        if(*depth == 1) {
+        if (*depth == 1) {
             unlock(node, "_delete", "node", __LINE__, locksHeld);
         }
     }
@@ -530,7 +505,7 @@ int delete(const char *string, size_t strlen) {
     int result = 0, locksHeld = 0, depth = 0;
     // Skip strings of length 0
     if (strlen == 0 || root == NULL) {
-        if(strlen == 0) printf("Strlen == 0\n");
+        if (strlen == 0) printf("Strlen == 0\n");
         else printf("Root is null\n");
         return result;
     }
@@ -539,8 +514,8 @@ int delete(const char *string, size_t strlen) {
     lock(root, "delete", "root", __LINE__, &locksHeld);
     // Store the result of the deletion in result; Parent node of root is null.
     result = (NULL != _delete(root, NULL, string, strlen, &locksHeld, &depth));
-    if(locksHeld != 0) printf("%d lock(s) are held.\n", locksHeld);
-    assert(locksHeld == 0); 
+    if (locksHeld != 0) printf("%d lock(s) are held.\n", locksHeld);
+    assert(locksHeld == 0);
     return result;
 }
 

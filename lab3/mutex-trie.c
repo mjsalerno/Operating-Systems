@@ -263,7 +263,7 @@ int _insert(const char *string, size_t strlen, int32_t ip4_address,
 
 int insert(const char *string, size_t strlen, int32_t ip4_address) {
     int result = 0;
-    if(strlen > 0) {
+    if (strlen > 0) {
         int rc;
         // obtain the lock
         rc = pthread_mutex_lock(&mutex);
@@ -274,7 +274,7 @@ int insert(const char *string, size_t strlen, int32_t ip4_address) {
             do {
                 printf("ThreadID: %lu - Waiting to insert '%s'\n", (long) pthread_self(), string);
                 waiting++;
-                if(waiting == threadCount) {
+                if (waiting == threadCount) {
                     printf("\n=== All threads are now squatting. Waiting for the simulation to end. ===\n\n");
                 }
                 pthread_cond_wait(&condition, &mutex);

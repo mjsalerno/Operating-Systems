@@ -28,6 +28,10 @@ struct trie_node {
 static struct trie_node * root = NULL;
 static pthread_mutex_t rootMutex = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * Performs a lock and adds to the counter how many nodes are locked.
+ * Performs an assertion on the number of locks held to make sure we dont have a negative amount of locks.
+ */
 void lock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
     int rv;
     assert(*locksHeld >= 0);
@@ -38,6 +42,10 @@ void lock(struct trie_node *node, char *function, char *var, int line, int *lock
     assert(rv == 0);
 }
 
+/**
+ * Performs an unlock and reduces the counter keeping track of the locked nodes.
+ * Performs an assertion on the number of locks held to make sure we dont have a negative amount of locks.
+ */
 void unlock(struct trie_node *node, char *function, char *var, int line, int *locksHeld){
     int rv;
     assert(*locksHeld >= 0);
@@ -537,8 +545,11 @@ void _print(struct trie_node *node) {
 }
 
 void print() {
+    //int locksHeld = 0;
     printf("Root is at %p\n", root);
     /* Do a simple depth-first search */
+    //lock(root, "delete", "root", __LINE__, &locksHeld);
     if (root)
         _print(root);
+    //unlock(root, "delete", "root", __LINE__, &locksHeld);
 }

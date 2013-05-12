@@ -1,0 +1,827 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0065)http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>CSE 306: Lab 2: The Shell</title>
+<link rel="stylesheet" type="text/css" href="./CSE 306  Lab 2  The Shell_files/style.css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript" src="./CSE 306  Lab 2  The Shell_files/util.js">
+</script><style type="text/css"></style>
+</head>
+<body class=" hasGoogleVoiceExt"><div class="jump-hdr"><div class="jump-section">Sections ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#CSE-306--Lab-2--The-Shell" style="padding-left: 0em; background-color: rgb(192, 192, 255); background-position: initial initial; background-repeat: initial initial;">CSE 306: Lab 2: The Shell</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Picking-your-group" style="padding-left: 2em;">Picking your group</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Introduction" style="padding-left: 1em;">Introduction</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Getting-started" style="padding-left: 2em;">Getting started</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Sharing-code-with-a-partner" style="padding-left: 2em;">Sharing code with a partner</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Hand-In-Procedure" style="padding-left: 2em;">Hand-In Procedure</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Helpful-References" style="padding-left: 1em;">Helpful References</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Core-assignment" style="padding-left: 1em;">Core assignment</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Helpful-and-allowed-interfaces" style="padding-left: 2em;">Helpful and allowed interfaces</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Finding-programs" style="padding-left: 2em;">Finding programs</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Debugging" style="padding-left: 2em;">Debugging</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Variables-and-Echo-Support" style="padding-left: 1em;">Variables and Echo Support</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Redirection-Support" style="padding-left: 1em;">Redirection Support</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Scripting-Support" style="padding-left: 1em;">Scripting Support</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Job-Control-Support" style="padding-left: 1em;">Job Control Support</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Keeping-History" style="padding-left: 1em;">Keeping History</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Fun" style="padding-left: 2em;">Fun</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Contests" style="padding-left: 1em;">Contests</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Style-and-More" style="padding-left: 1em;">Style and More</a></div></div><div class="jump-section">Exercises ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-1">Exercise 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-2">Exercise 2</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-3">Exercise 3</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-4">Exercise 4</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-5">Exercise 5</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-6">Exercise 6</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-7">Exercise 7</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-8">Exercise 8</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-9">Exercise 9</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab2.html#Exercise-10">Exercise 10</a></div></div><div class="jump-section">References ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Lab tools guide</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/i386/toc.htm">80386 manual</a><div>IA32</div><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-1.pdf" style="padding-left: 1em;">Basic architecture</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2A.pdf" style="padding-left: 1em;">Instruction set A-M</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2B.pdf" style="padding-left: 1em;">Instruction set N-Z</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3A.pdf" style="padding-left: 1em;">System programming 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3B.pdf" style="padding-left: 1em;">System programming 2</a></div></div></div>
+<h1 id="CSE-306--Lab-2--The-Shell">CSE 306: Lab 2: The Shell</h1>
+<div id="topnavbar">
+<ul class="topnavlist">
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/index.html">Home</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/syllabus.html">Schedule</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/policies.html">Syllabus</a></li>
+<!--<li><a href="tentativeschedule.html">Tentative schedule</a></li>-->
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/labs.html">Labs</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Tools</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/reference.html">Reference</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/announcements.html">Announcements</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/mailing.html">Mailing List</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="./CSE 306  Lab 2  The Shell_files/labs.js"></script>
+
+<p>
+<b>Due 11:59 PM, Friday, March 15, 2013</b>
+</p>
+
+<h3 id="Picking-your-group">Picking your group</h3>
+
+<p>
+You may do the lab alone, or in pairs.  If you work in pairs, only one student will hand in the assignment for you.  
+</p>
+
+<p>
+<b>Please email the instructor your group preference as soon as possible.</b>
+Once we have your group membership, we will add group permissions to one of your git repositories on scm, which you will use to hand in the assignment.  These group permissions will allow you to share code with your partner.
+If you choose to work alone, please email this to the instructor.
+</p>
+
+<p><b>Important:</b> If you work in a group, one partner will hand in the assignment for both.  You are welcome to
+coordinate code sharing with your partner however you prefer, 
+including emailing code, setting up your own version control system, etc.
+</p>
+
+
+<h2 id="Introduction">Introduction</h2>
+
+
+<p>
+To become familiar with low-level Unix/POSIX system calls related to process
+and job control, file access, IPC (pipes and redirection).  You will write a
+mini-shell with basic operations (a small subset of Bash's functionality).
+Expected length of this C program is 1000-2000 lines of code (not very long,
+but the code will be challenging, so start early). 
+</p>
+
+
+<h3 id="Getting-started">Getting started</h3>
+
+<p>
+We will provide you with some initial source code to start from.
+To fetch that source, use Git to commit your Lab 1 source,
+fetch the latest version of the course repository,
+and then
+create a local branch called <tt>lab2</tt> based on our lab2
+branch, <tt>origin/lab2</tt>:
+</p>
+<pre>kermit% <kbd>cd ~/CSE506/lab</kbd>
+kermit% <kbd>git commit -am 'my solution to lab1'</kbd>
+Created commit 254dac5: my solution to lab1
+ 3 files changed, 31 insertions(+), 6 deletions(-)
+kermit% <kbd>git pull</kbd>
+
+Already up-to-date.
+kermit% <kbd>git checkout -b lab2 origin/lab2</kbd>
+Branch lab2 set up to track remote branch refs/remotes/origin/lab2.
+Switched to a new branch "lab2"
+kermit% 
+</pre>
+
+<p>
+The <kbd>git checkout -b</kbd> command shown above actually does two
+things: it first creates a local branch <tt>lab2</tt> that is
+based on the <tt>origin/lab2</tt> branch provided by the course
+staff, and second, it changes the contents of your <tt>lab</tt>
+
+directory to reflect the files stored on the <tt>lab2</tt> branch.
+Git allows switching between existing branches using <kbd>git
+checkout <i>branch-name</i></kbd>, though you should commit any
+outstanding changes on one branch before switching to a different
+one.
+</p>
+
+<p>
+You will now need to merge the changes you made in your <tt>master</tt> (lab1)
+branch into the <tt>lab2</tt> branch, with the <kbd>git merge master</kbd> command.
+</p>
+
+<p>
+In some cases, Git may not be able to figure out how to merge your changes with
+the new lab assignment (e.g. if you modified some of the code that
+is changed in the second lab assignment).  In that case, the <kbd>git
+merge</kbd> command will tell you which files are <i>conflicted</i>,
+and you should first resolve the conflict (by editing the relevant files)
+and then commit the resulting files with <kbd>git commit -a</kbd>.
+</p>
+
+<p>
+Lab 2 contains the  new source files in the lab2 directory.
+</p>
+
+
+<h3 id="Sharing-code-with-a-partner">Sharing code with a partner</h3>
+
+<p>We will set up group permission to one partner's git repository on scm.  
+Suppose Partner A is the one handing in the code.  Partner A should follow the instructions
+above to merge the lab2 code.  
+After Partner A has pushed this change to scm, 
+Partner B should simply clone Partner A's repository
+and use it.  For example:</p>
+
+<pre>kermit% <kbd>git clone ssh://PartnerB@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-PartnerA lab2</kbd>
+</pre>
+
+<p>Note that it may take a few days about letting the course staff know your partner
+selection for the tech staff to apply these permission changes.
+Again, you are not required to use git to coordinate changes, only to hand in the assignment, 
+but we recommend you learn
+to use git.  You may use any means you like to share code with your partner.
+</p>
+
+
+<h3 id="Hand-In-Procedure">Hand-In Procedure</h3>
+
+<p>
+When you are ready to hand in your lab code and write-up,
+create a file called <tt>slack.txt</tt> noting how many
+late hours you have used both for this assignment and in
+total. (This is to help us agree on the number that you have used.)
+This file should contain a single line formatted as follows (where n is the number of late hours):
+</p>
+<pre>late hours taken: n</pre>
+<p>
+Then run <kbd>make handin</kbd> in the <tt>labs</tt> directory.
+<i>If you submit multiple times, we will take the latest
+submission and count late hours accordingly.</i></p>
+
+<p>In this and all other labs, you may complete challenge problems for extra credit.
+If you do this, please create a file called challenge.txt, which includes 
+a short (e.g., one or two paragraph) description of what you did
+to solve your chosen challenge problem and how to test it.
+If you implement more than one challenge problem,
+you must describe each one.
+</p>
+
+<!--If you are submitting late, <tt>turnin</tt> will fail, and you
+will need to email <tt>lab2-handin.tar.gz</tt> to the TA.-->
+
+<p>This lab does not include any questions for you to answer,
+but you should document your design in the README file.</p>
+
+<h2 id="Helpful-References">Helpful References</h2>
+
+<p>
+There are no required readings for this lab, but 
+a few references explain how shells work in some detail.
+These references may provide substantial insight into 
+how to complete this assignment.  <b>Do NOT copy and paste 
+code from these sources into your assignment.</b>
+</p>
+
+<ol>
+<li> <a href="http://www.gnu.org/software/libc/manual/html_node/">The GNU C Library</a>.  See specifically Chapter 27.6, "Implementing a shell".</li>
+<li> Chapters 4 and 10 of "The Design and Implementation of FreeBSD"</li>
+</ol>
+
+<h2 id="Core-assignment">Core assignment</h2>
+
+<p>
+Write a C program named "swish" (for SeaWolves Interactive SHell) 
+that performs a subset of commands you're
+familiar with from other shells like GNU's Bash.  You're welcome to study
+the code for bash, but the code you submit should be your own!
+</p>
+
+<p>
+When you start your shell, you should be able to type commands such as this
+and see their output:
+</p>
+
+<pre>$ ./swish
+swish&gt; ls
+# output from ls
+swish&gt; ls -l
+# verbose output from ls
+swish&gt; exit
+$
+</pre>
+
+<p>Note that commands like <kdb>ls are (usually) just programs.  There are a few built-in commands,
+discussed below.  In general, though, the shell's job is to launch programs and coordinate their input and output.</kdb></p>
+
+<p><b>Important:</b> You do not need to reimplement any binaries that already exist, such as <tt>ls</tt>.
+You simply need to launch these programs appropriately and coordinate their execution.</p>
+
+<h3 id="Helpful-and-allowed-interfaces">Helpful and allowed interfaces</h3>
+
+<p>You are welcome to use any standard C version, including C99 or C11, as well as K&amp;R, ANSI, or ISO C.</p>
+
+<p>
+You will have to parse the command line and then use fork(2), clone(2),
+and/or and exec(2) (or flavors of exec, such as exece, execle, etc.).
+Programs you run should output to stdout and stderr (errors); programs you
+run should take input from stdin.  You will have to study the wait(2) system
+call and its variants, so your shell can return the proper status codes.
+Don't spend time writing a full parser in yacc/lex: use plain str*
+functions to do your work, such as strtok(3).  You may use any system call
+(section 2 of the man pages) or library call (section 3 of the man pages)
+for this assignment, other than system(3).
+</p>
+
+<p><b>Hint:</b> Note that, by convention, the name of the binary is the first argument to a program.  
+Carefully check in the manual of the exec() variant you are using whether you should
+put the binary name in the argument list or not.
+</p>
+
+<p>
+In general, your selection of libraries is unrestricted, with one important exception: you
+should avoid the use of <kbd>system()</kbd>, which is really just a wrapper for another shell.
+Speaking more broadly, it is not acceptable to simply write a wrapper for another shell---you should implement
+your own shell for this assignment.</p>
+
+<h3 id="Finding-programs">Finding programs</h3>
+
+<p>Shells provide a nicer command-line environment by automatically searching
+common locations for commands.  For instance, a user may type <kbd>ls</kbd>,
+and the shell will automatically figure out that the binary is actually located at
+<kbd>/bin/ls</kbd>.  On Linux, the paths to automatically search
+is stored in the environment variable <kbd>PATH</kbd>.</p>
+
+<p>You can inspect your environment variables using the <kbd>printenv</kbd> command:</p>
+<pre>$ printenv
+TERM=xterm
+SHELL=/bin/bash
+PATH=/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/porter/bin
+...
+</pre>
+
+<p>When using PATH, check if the command includes a '/' character.  If so, you may pass this 
+command directly to the <kbd>exec()</kbd> system call, as the command itself is specifying a relative or absolute path.
+If the command does not include a '/' character, then the shell should try each of the
+values in the PATH list, e.g,: <kbd>ls</kbd> should be checked as <kbd>/usr/lib/lightdm/lightdm/ls</kbd>, 
+<kbd>/usr/local/sbin/ls</kbd>, <kbd>/usr/sbin/ls</kbd>, <kbd>/usr/bin/ls</kbd>, <kbd>/sbin/ls</kbd>,
+<kbd>/bin/ls</kbd>, <kbd>/usr/games/ls</kbd>, and <kbd>/hom/porter/bin/ls</kbd>.
+</p>
+
+<p>Hint: You can use the <kbd>stat()</kbd> system call to check whether a file exists, rather than 
+relying on the more expensive <kbd>exec()</kbd> system call to fail.</p>
+
+<p>You may use any <tt>exec()</tt> variant you like for this assignment, including variants
+that search the PATH for you.  If you do not implement path searching yourself, 
+be sure to test the case where the user changes
+the PATH (as described below), ensuring that the 
+newer PATH value is used.</p>
+
+
+<p>
+In general, environment variables are passed from the parent through the <kbd>envp</kbd>
+argument to <kbd>main()</kbd>.  Be sure to parse these variables so that
+you can use them to find programs, as well as pass them to child processes.</p>
+
+<p>
+Note: 'exit' is not a program you'll execute, but a built-in special program
+that should exit(3) from your shell.
+</p>
+
+
+<div class="required"><div id="Exercise-1" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 1.</span> (15 points)
+
+Implement simple command parsing in your shell.  Upon reading a line, launch the appropriate
+binary, or detect when the command is a special "built-in" command, such as <kbd>exit</kbd>.
+For now, <kbd>exit</kbd> is the only built-in command you need to worry about, but we will add more 
+in the following exercises.
+</p>
+
+<p>
+Before waiting for input, you should write the shell prompt <kbd>swish&gt; </kbd> to the screen.
+After each command completes, the shell should print another prompt.
+</p>
+<p>
+The shell should print output from commands as output arrives, rather than buffering all
+output until the command completes.  Similarly, if the user is typing input that should go
+to the running command via stdin, your shell should send these characters as soon as possible, 
+rather than waiting until the user types a newline.
+</p>
+
+<p>You do not need to clear characters from the screen if the user presses backspace.  Simply rewrite
+the command on a new line without the missing character.  Note, there is a challenge problem 
+at the end to add backspace support.</p>
+
+<p>
+We will refine the parsing logic in subsequent exercises.  Hint: you may want to read the 
+input character by character, as some keystrokes may require action without a newline.
+</p>
+
+<p>Be sure to use the <kbd>PATH</kbd> environment variable to search for commands.  Be sure
+you handle the case where a command cannot be found.</p>
+
+<p> When you are finished, your shell should be able to execute simple commands like <kbd>ls</kbd>
+and then exit.</p>
+
+</div>
+
+<p>
+If you build your shell correctly, you should be able to run your fileutil
+program from hw1 inside.
+</p>
+
+<p>
+Another built-in command you should support is 'cd' to change
+directory using the chdir(2) system call; and 'pwd' via getcwd(3) to
+print the current working directory:
+</p>
+
+<pre>swish&gt; pwd
+/home/porter
+swish&gt; ls
+# shows files in /home/porter
+swish&gt; cd /tmp
+swish&gt; pwd
+/tmp
+swish&gt; ls
+# shows files in /tmp
+</pre>
+
+<div class="required"><div id="Exercise-2" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 2.</span> (10 points.)
+
+Add support for changing the working directory, including <kbd>cd</kbd> and <kbd>pwd</kbd>.  
+</p>
+<p>Note that the working directory can affect the interpretation of environment variables, 
+as '.', the current working directory, is a valid entry in <kbd>PATH</kbd>.
+</p>
+<p>
+Note that <kbd>cd -</kbd> should change to the last directory the user was in, and
+<kbd>cd</kbd> with no argument should go to a user's home directory (also stored in an 
+environment variable).</p>
+<p>Similarly, the built-in command should handle the targets <kbd>cd .</kbd> and <kbd>cd ..</kbd>
+properly. (Note that every directory includes these file names if you type <kbd>ls -a</kbd>, so this should not require special handling.)</p>
+</div>
+
+<p>
+Now that we can change directories, let's add some style to our shell. 
+Any self-respecting shell has a fancier command prompt, which includes the 
+working directory.</p>
+
+<div class="required"><div id="Exercise-3" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 3.</span> (5 points.)
+
+Add the current working directory to your shell prompt.  Rather than simply printing <kbd>swish&gt; </kbd>, instead print the current working directory in brackets, like this:
+</p>
+
+<pre>[/tmp] swish&gt; ls
+# shows files in /tmp
+</pre>
+
+</div>
+
+<h3 id="Debugging">Debugging</h3>
+
+<p>
+One feature which will help with development of your shell is to add debugging messages, which
+can be enabled when you start your shell.
+</p>
+
+<div class="required"><div id="Exercise-4" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 4.</span> (5 points.)
+Add debugging messages to your shell</p>
+<p>
+If you start swish with -d, it should display debugging info on stderr:
+</p>
+<ul>
+<li> every command executed should say "RUNNING: cmd", where cmd is replaced with the text of the command.</li>
+<li> When command ends you should say "ENDED: "cmd" (ret=%d)" and show it's
+  exit status</li>
+<li> add anything else to the debugging output (be creative)</li>
+</ul>
+</div>
+
+<h2 id="Variables-and-Echo-Support">Variables and Echo Support</h2>
+
+<p>In some sense, a shell actually defines a simple programming language.
+Like any self-respecting language, swish should have variables.
+In order to avoid confusion with commands, our shell will require all variable
+names to start with a '$' character, and only have either alphanumerical names or
+a single "special" character (e.g., '?', '@', etc.), and are terminated by a space or newline.
+</p>
+
+<p>
+For now, we will just add a few simple variables, namely the environment variables
+and a special variable to store the return code (<kbd>$?</kbd>).  You are welcome to
+add others if you like.
+</p>
+
+<p>A shell user may use a variable in a command, and the shell will automatically 
+replace the variable with the value of this variable.  Similarly, a user may 
+assign a new value to a variable (including an environment variable) using the built-in <kbd>set</kbd> commands.
+A useful tool for debugging variables is the <kbd>echo</kbd> program.</p>
+
+<pre>[/home/porter] swish&gt; echo $PATH
+/bin:/usr/bin
+[/home/porter] swish&gt; set PATH = /bin:/usr/bin:.
+[/home/porter] swish&gt; echo $PATH
+/bin:/usr/bin:.
+[/home/porter] swish&gt; ls
+foo.c Makefile
+[/home/porter]swish&gt; echo $?
+0
+[/home/porter]swish&gt; ls /blah
+/blah: no such file or directory
+[/home/porter]swish&gt; echo $?
+1
+</pre>
+
+<div class="required"><div id="Exercise-5" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 5.</span> (10 points.)
+Add variable support to swish.  You should be able to 
+set variables, and use them in commands, as illustrated above.
+</p>
+
+<p>Test your environment variable support with the <kbd>printenv</kbd> binary, which prints all of the environment variables and their values. 
+Be sure that, if the shell user changes an environment variable, the output of <kbd>printenv</kbd> reflects this.
+</p>
+<p>
+It is ok to treat all variables as environment variables.  You may exclude or include <kbd>$?</kbd> from the environment variable list.</p>
+</div>
+
+
+
+<h2 id="Redirection-Support">Redirection Support</h2>
+
+<p>One of the most powerful features of a Unix-like shell is the ability to 
+compose a series of simple applications into a more complex workflow.
+The key feature that enables this composition is output redirection.
+</p>
+
+<p>Redirection is accomplished by three special characters '&lt;', '&gt;', and '|'.
+You will need to add logic to your parsing code which identifies these characters
+and uses them to identify shell-level directives, rather than simply passing them to 
+<kbd>exec()</kbd>.
+</p>
+
+<p>The first two characters can direct input from a file into a program, and 
+and output from a program, respectively.</p>
+
+<pre>[/home/porter] swish&gt; ls -l &gt;newfile
+[/home/porter] swish&gt; cat &lt; newfile
+newfile
+swish
+...
+</pre>
+
+<p>In the example above, the standard output of <kbd>ls -l</kbd> is 
+directed to a file, named newfile.  If this file didn't exist previously, the shell
+created it.  Note that the <kbd>ls</kbd> program does not know it is writing to a file,
+and is not passed the string '&gt;newfile' as an argument.
+Similarly, the contents of newfile are passed to the <kbd>cat</kbd> program
+as its standard input.
+</p>
+
+<p>Note that we are not constrained to just use standard input (handle 0) 
+and output (handle 1) with these
+operators.  You should be able to put an integer in front of
+the operator to indicate another handle, such as stderr.</p>
+
+<pre>[/home/porter] swish&gt; somecommand 2&gt;err.log
+</pre>
+
+<p>This example runs "somecommand" and redirects its stderr to "err.log". </p>
+
+<p>
+You'll have to learn how to manipulate file descriptors carefully using
+system calls such as open, close, read/write, dup/dup2, and more.
+</p>
+
+
+<p>Finally, you can string multiple applications together using the '|' operator:</p>
+
+<pre>[/home/porter] swish&gt; ls | grep '.txt' | wc -l
+4
+</pre>
+
+<p> In this example, my shell creates three child processes.  The
+first reads the contents of my home directory and outputs them to the
+<kbd>grep</kbd> program, which searches for the string '.txt'.  The
+output of <kbd>grep</kbd>, i.e., all files with the .txt extension, is
+then sent to the <kbd>wc</kbd> program, which counts how many lines of
+input it is given (i.e., the number of .txt files in my home
+directory.  
+</p>
+
+<div class="required"><div id="Exercise-6" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 6.</span> (15 points.)
+
+Add support for all three forms of redirection described above, as well as
+assigning inputs to arbitrary file handles other than stdin and stdout.
+<br>
+Be sure to run several test cases for piping applications together,
+and ensure that termination is handled cleanly.
+</p>
+</div>
+
+<h2 id="Scripting-Support">Scripting Support</h2>
+
+<p>
+Most shells can be run interactively as well as non-interactively.  In
+non-interactive mode, you can put the shell commands in a plain file---essentially creating
+a program of shell commands (called a shell script).  For
+example, if I put this in a file called "foo.sh":
+</p>
+
+<pre>cat foo.sh
+ls -l
+echo hello world
+</pre>
+
+<p>
+Then I can use this file (or program) to have the shell run these commands sequentially as follows:
+</p>
+
+<pre>$ swish foo.sh
+</pre>
+
+<p> In other words, <kbd>swish</kbd> will identify the string 'foo.sh' on its own 
+command line and then interpret these commands as a batch.
+In a batch, the first line runs to completion, then the second, and so forth.
+These commands do not need to run in parallel, except for pipes on the same line (described below).
+</p>
+
+<p>One can also make the shell script, executable, and then run it
+directly like any other program.  For that, I need the file to start with a
+special character sequence called a 'shebang' followed by the path of the
+shell</p>
+
+<pre>$ cat foo.sh
+#!swish
+ls -l
+echo hello world
+$ chmod u+x foo.sh
+$ ./foo.sh
+</pre>
+
+<p>
+Note that <kbd>swish</kbd> must be in your PATH for the shebang above to work, otherwise,
+you should use an absolute path, like /home/porter/lab2/swish.</p>
+
+<div class="required"><div id="Exercise-7" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 7.</span> (10 points.)
+Add support for swish to run non-interactively: this boils down to basically
+supporting an optional input file argument.  If 'testscript' is a shell script, 
+the following examples should work, where '$' indicates your default shell (e.g., bash).
+</p>
+
+<pre>$ ./swish testscript
+</pre>
+
+<p>or</p>
+
+<pre>[/home/porter] swish&gt; chmod u+x testscript
+[/home/porter] swish&gt; ./testscript
+</pre>
+
+<p>
+You will also have to support a comment character '#' so if you see a line
+starting with '#' in the script, you should ignore it.  The comment command
+could also be run non-interactively and "do nothing".
+</p>
+
+<pre>[/home/porter] swish&gt; #this is some text
+[/home/porter] swish&gt;
+</pre>
+</div>
+
+<h2 id="Job-Control-Support">Job Control Support</h2>
+
+<p>Another useful feature of a shell is the ability to pause and resume execution 
+of a job.  In the case of a long-running program, it is helpful to be able to place it
+in the "background"---allowing the user 
+to issue more commands interactively while the long-running program continues execution.
+</p>
+
+<p>Your shell should identify the special character '&amp;', which means that a program should be executed
+in the background, returning a shell prompt immediately.
+The built-in command <kbd>jobs</kbd>
+should list all background running jobs, their name, PID, job number, etc.
+just like bash with their status (running or suspended).  It should also print
+the exit status code of background jobs that just ended.  </p>
+
+<p>
+In addition to <kbd>jobs</kbd>, we will need to add a few more built-in commands
+to make job control useful.
+The command <kbd>fg 3</kbd>
+should make job number in your list to go to the foreground (and resumed
+execution if it is not running/stopped).  The command
+<kbd> bg 2</kbd>
+should cause suspended program 2 to run in  the background.
+</p>
+
+<p>Finally, we need to be able to forcibly pause or terminate a program.
+If you type Ctrl+C: the foreground program(s) should be killed.  If you hit Ctrl+Z: the
+foreground program(s) should be suspended and added to the list of jobs (i.e.,
+you send it a SIGTSTP signal to suspend it; fg sends it a SIGCONT to
+resume running).
+</p>
+
+<p><b>Important:</b> Because you will be launching <tt>swish</tt> 
+from a parent shell, you need to disable job control on the parent shell.
+Otherwise, the parent will intercept the Control key, and 
+key sequences such as Ctrl+Z or Ctrl+C.  We have included a launcher script,
+invoked as <kbd>. ./launcher.sh</kbd>, which will disable job control 
+in the paerent shell, so that swish will receive control sequences
+on standard in appropriately.  <b>Note also that you must include a single . in front of the launcher script</b>.  This dot causes the script 
+to be "sourced", or executed within the parent process, 
+rather than only in the child.  We need to do this in order to disable job control
+in the parent shell.  Because this launcher was not included in the original
+handout, you may need to <kbd>git pull</kbd> to fetch this from the read-only "origin" repository.</p>
+
+
+<div class="required"><div id="Exercise-8" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 8.</span>  (15 points.)
+Add support for job control, including the '&amp;' character, 
+the built-in commands jobs, fg, and bg, and Ctrl-C and Ctrl+Z.  Be sure to run 
+plenty of tests, including handling of piped applications or scripts.</p>
+</div>
+
+<h2 id="Keeping-History">Keeping History</h2>
+
+<p>A very useful feature of a shell is the ability to keep previously typed commands,
+and allow a user to easily re-issue them.</p>
+
+<p>For this feature, the user should be able to type the 'up' or
+'down' arrow and cycle through a circular buffer of their previous commands.
+In other words, if I type an up arrow, I should see a prompt followed by my previous command, 
+and if I hit 'enter', the command will execute again.</p>
+
+<p>Although a production-quality shell would clear the command buffer when you type the up or down arrow,
+it is ok for this assignment to just print a new prompt with the command on a new line.
+</p>
+
+<p><b>Important:</b> You will also need to run with the launcher (as described above) 
+for this exercise, as
+the parent shell buffers input characters until it sees a newline by default.  The launcher
+will disable line buffering in the parent.</p>
+
+<p>For this exercise, it is fine to set a compile-time history length, such as 50 lines.</p>
+
+<p>In order for my history to survive after the shell exits, most shells will write a file
+in the user's home directory, such as /home/porter/.swish_history.  For full credit, your 
+shell should persistently store the user's command history.  You can use environment
+variables to figure out where the user's home directory is.</p>
+
+<div class="required"><div id="Exercise-9" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 9.</span> (10 points.)
+Add support for tracking the history of a user, including saving the history to a file.
+Support the up and down keys to cycle through history, and add a built-in command <kbd>history</kbd>
+that dumps the entire history to the console.  Also, add a built-in command, <kbd>clear</kbd> 
+to reset the history.
+</p>
+</div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (5 bonus points)
+	 Add support to clear the command buffer when the user types an up or down arrow.
+	 This typically requires interaction with the tty device.
+	 Also, add support for the "backspace" key to delete individual characters.
+</p>
+</div>
+
+
+<h3 id="Fun">Fun</h3>
+
+<p>Since this is Wolfie's shell, we should add a signature command.</p>
+
+<div class="required"><div id="Exercise-10" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 10.</span> (5 points.)
+ Create a built-in command,
+or a separate program, called <kbd>wolfie</kbd> 
+that draws Wolfie on the console using <a href="http://en.wikipedia.org/wiki/ASCII_art">ASCII art</a>.  You are welcome to use an ASCII art generator, or draw your own by hand</p>
+</div>
+
+<h2 id="Contests">Contests</h2>
+
+<p>In order to encourage creativity and a bit of friendly competition,
+the instructor and TAs will judge a few contests.  The prizes will be
+bonus points.  Only teams that complete all exercises will be eligible
+to win.</p>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (5 bonus points)
+	 The team with the coolest-looking Wolfie will get 5 bonus points, as
+	 subjectively judged by the course staff.
+</p>
+</div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (10 bonus points)
+	 The team that implements its shell in the fewest lines of <b>readable, clean code</b>
+	 will get a bonus.  This count excludes blank lines and comments (comments are always welcome).
+	 Code that is confusing and difficult to read, as subjectively judged by the course staff,
+	 will be disqualified.
+</p>
+</div>
+
+<p>Winners will be announced in class after the grading of lab 2 is complete.  More than the points, of course, is the pride of winning.</p>
+
+<h2 id="Style-and-More">Style and More</h2>
+
+<p>
+Aside from testing the proper functionality of your code, we will also
+evaluate the quality of your code.  Be sure to use a consistent style, well
+documented, and break your code into separate functions and/or source files
+as it makes sense.
+</p>
+
+<p>
+To be sure your code is very clean, it must compile with "gcc -Wall -Werror"
+without any errors or warnings!
+</p>
+
+<p>
+If the various sources you use require common definitions, then do not
+duplicate the definitions.  Make use of C's code-sharing facilities.
+</p>
+
+<p>
+You must include a README file with this and any assignment.  The README
+file should describe what you did, what approach you took, results of any
+measurements you made, which files are included in your submission and what
+they are for, etc.  Feel free to include any other information you think is
+helpful to us in this README; it can only help your grade.
+</p>
+
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (5 bonus points)
+Support time counting.  If you start swish with -t, it should count how long
+each program ran and print stats when the program ends.  The output should
+be something like:
+</p>
+<pre>$ swish -t
+swish&gt; du -sh /usr
+4.3MB /usr
+TIMES: real=23.7s user=12.1s sys=7.0s
+</pre>
+	 <br>Be sure to note this in challenge.txt
+	 if you do this.
+</div>
+
+<!--
+<div class="challenge">
+<p><span class="header">Challenge!</span> (15 bonus points)
+Support pipes, so you could run multiple commands such as
+</p>
+<pre>
+swish> find /usr/include | egrep -v /sys/ | sort | uniq | wc -l
+</pre>
+<p>
+Note that you should handle the situation where one types ^C to abort a
+program: the whole pipe sequence should end; also, if a program in the
+middle of a pipe fails, the entire pipe should be aborted.  When in doubt,
+follow what regular shells like GNU bash do.
+	 <br/>Be sure to note this in challenge.txt
+	 if you do this.
+</p></div>
+-->
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (10 bonus points)
+Support file "globbing" for extensions, such as
+</p>
+<pre>swish&gt; ls *.jpg
+</pre>
+<p>
+The above should print all the file names that end with ".jpg".  Only
+support *.[EXTENSION].  That is, you'll need to check to see if an argument
+starts with an '*', then use readdir(2) and getdents(3) as needed to read
+all files from the current directory, match them -- using strstr(3) -- and
+add them to list of args you pass to exec(2). In other words, your shell
+will be exec-ing a command that'll be as if you typed the full names of all
+the files on the command line one by one.
+	 <br>Be sure to note this in challenge.txt
+	 if you do this.
+</p></div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (15 bonus points)
+Add support for conditional control flow in your shell, including if
+statements, while loops, and for loops.
+</p></div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (10 bonus points)
+Add support for "tab completion" in your shell.  If a user types a prefix of a command
+and then hits the "Tab" key twice, the shell should show all possible commands 
+that match the prefix.  If only one command is possible, the shell should automatically 
+fill in the rest of the command.  If all possible commands share subsequent letters, automatically
+fill in letters until the commands diverge.
+<br>
+Hint: Consider using a trie data structure to organize the available commands.
+</p></div>
+
+<p>
+<b>This completes the lab.</b>
+Type <kbd>make handin</kbd> in the <tt>lab2</tt> directory.
+</p>
+
+<hr>
+<p class="lastupdated">Last updated: Sat Mar 09 22:06:26 -0500 2013
+ [<a href="http://validator.w3.org/check?uri=referer">validate xhtml</a>]</p>
+
+
+</body></html>

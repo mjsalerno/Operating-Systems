@@ -1,0 +1,1069 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0065)http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>CSE 306: Lab 1: System calls</title>
+<link rel="stylesheet" type="text/css" href="./CSE 306  Lab 1  System calls_files/style.css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript" src="./CSE 306  Lab 1  System calls_files/util.js">
+</script><style type="text/css"></style>
+</head>
+<body class=" hasGoogleVoiceExt"><div class="jump-hdr"><div class="jump-section">Sections ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#CSE-306--Lab-1--System-calls" style="padding-left: 0em; background-color: rgb(192, 192, 255); background-position: initial initial; background-repeat: initial initial;">CSE 306: Lab 1: System calls</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Introduction" style="padding-left: 1em;">Introduction</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Software-Setup" style="padding-left: 2em;">Software Setup</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#VM-Setup" style="padding-left: 2em;">VM Setup</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Getting-started-with-git" style="padding-left: 2em;">Getting started with git</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Hand-In-Procedure" style="padding-left: 2em;">Hand-In Procedure</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Migrating-to-your-private-repository" style="padding-left: 2em;">Migrating to your private repository</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Part-1--Assembly-and-C" style="padding-left: 1em;">Part 1: Assembly and C</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Getting-Started-with-C" style="padding-left: 2em;">Getting Started with C</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Compiling-a-C-program" style="padding-left: 2em;">Compiling a C program</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Debugging-C-with-gdb" style="padding-left: 2em;">Debugging C with gdb</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Getting-Started-with-x86-assembly" style="padding-left: 2em;">Getting Started with x86 assembly</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Part-2--System-calls-in-Linux" style="padding-left: 1em;">Part 2: System calls in Linux</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Where-is-the-OS-kernel-" style="padding-left: 2em;">Where is the OS kernel?</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Protection-rings" style="padding-left: 2em;">Protection rings</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Switching-between-rings" style="padding-left: 2em;">Switching between rings</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#System-calls" style="padding-left: 2em;">System calls</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Linux-system-call-entry-point" style="padding-left: 2em;">Linux system call entry point</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Writing-your-own-system-calls" style="padding-left: 2em;">Writing your own system calls</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Part-3--Using-system-calls" style="padding-left: 1em;">Part 3: Using system calls</a></div></div><div class="jump-section">Exercises ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-1">Exercise 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-2">Exercise 2</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-3">Exercise 3</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-4">Exercise 4</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-5">Exercise 5</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab1.html#Exercise-6">Exercise 6</a></div></div><div class="jump-section">References ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Lab tools guide</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/i386/toc.htm">80386 manual</a><div>IA32</div><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-1.pdf" style="padding-left: 1em;">Basic architecture</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2A.pdf" style="padding-left: 1em;">Instruction set A-M</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2B.pdf" style="padding-left: 1em;">Instruction set N-Z</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3A.pdf" style="padding-left: 1em;">System programming 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3B.pdf" style="padding-left: 1em;">System programming 2</a></div></div></div>
+<h1 id="CSE-306--Lab-1--System-calls">CSE 306: Lab 1: System calls</h1>
+<div id="topnavbar">
+<ul class="topnavlist">
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/index.html">Home</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/syllabus.html">Schedule</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/policies.html">Syllabus</a></li>
+<!--<li><a href="tentativeschedule.html">Tentative schedule</a></li>-->
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/labs.html">Labs</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Tools</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/reference.html">Reference</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/announcements.html">Announcements</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/mailing.html">Mailing List</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="./CSE 306  Lab 1  System calls_files/labs.js"></script>
+
+<p>
+<b>Due 11:59 PM, Friday, February 15, 2013</b>
+</p>
+
+<h2 id="Introduction">Introduction</h2>
+<p>
+This lab is split into three parts.
+The first part concentrates on getting familiarized
+with C and the x86 assembly language.
+The second part will walk you through how a system 
+call is issued and the Linux code which handles system calls.
+In the third part, you will implement a text file processing
+utility <em>without using libc</em> (i.e., issuing system calls
+directly from your application).
+</p>
+
+<h3 id="Software-Setup">Software Setup</h3>
+<p>
+The files you will need for this and subsequent lab assignments in this
+course are distributed using the <a href="http://git-scm.com/">Git</a>
+version control system.
+</p>
+
+<p>
+Git is a powerful, but tricky, version control system.
+We highly recommend taking time to understand git so that you will be comfortable using it during the 
+labs.
+We recommend the following resources to learn more about git:
+</p>
+<ol>
+<li> <a href="http://www.sbf5.com/~cduan/technical/git/">Understanding git conceptually</a>
+This is a MUST READ if you want to work on git smoothly. (You may 
+skip the last part: Rebasing, for now)</li>
+<li> <a href="http://try.github.com/levels/1/challenges/1">Quick 15-20 mins online exercise to get to know git.</a></li>
+<li> <a href="http://www.kernel.org/pub/software/scm/git/docs/user-manual.html">Git
+user's manual</a></li>
+<li> If you are already familiar with other version control
+systems, you may find this
+<a href="http://eagain.net/articles/git-for-computer-scientists/">CS-oriented
+overview of Git</a> useful.</li>
+<li> For reference, bookmark the <a href="http://www.cheat-sheets.org/saved-copy/git-cheat-sheet.pdf">Git Cheat Sheet</a>, which 
+     includes a summary of useful git commands.</li>
+</ol>
+
+
+<h3 id="VM-Setup">VM Setup</h3>
+
+<p>
+Each student (enrolled and on the waiting list) 
+will be given a virtual machine on the OS teaching cluster 
+with the basic required software installed.  
+You will have root access to this machine, and be able to install additional 
+tools (editors, debuggers, etc) as you see fit.
+</p>
+
+<p>
+You are also welcome to install the needed software on your own laptop.
+The course staff is not available to help you debug your personal
+laptop configuration.
+The <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">tools page</a>
+has directions on how to set up and use <tt>gcc</tt> and other course software on your own machine.
+</p>
+
+<p>Each student currently enrolled or on the waiting list will be
+assigned a VM, IP, and an initial password.  Newly enrolled students will 
+be assigned a VM within a few days of enrolling.</p>
+
+<p>
+To get started with your VM, you must do some system setup.  
+You must initially setup your VM via the vSphere client; after setup is complete
+you can use ssh to access your VM. </p>
+
+<p>There are some helpful notes on using vSphere <a href="http://www.cs.sunysb.edu/facilities/faqs/VMrdp.html">here</a>. <b>NOTE: DO NOT INSTALL A NEW OS</b> (CentOS or otherwise)---only use these notes for tips on using vSphere.</p>
+
+<p> Use a remote desktop client to connect to connect to ts1.cs.stonybrook.edu:22.
+Use <kbd>CS\userid</kbd> to log in, using the same username and password you use for department email.
+</p>
+
+<p>Start the vSphere client.  Select the vm server assigned to you, eg. <kbd>esx3sc.cs.stonybrook.edu</kbd> or <kbd>esx4sc.cs.stonybrook.edu</kbd> and again use your CS department credentials.  Your VM assignment should indicate which esx server 
+to log into (but it will be either 3 or 4 if you lost the email).  Ignore the SSL warning.</p>
+
+<p>Once you have logged in, click on "Inventory", then select your VM from the list.  Right click on it, and select "Open Console."  Click the green "Play" button to start the VM.  You can log in with the provided account and initial password.  <b>Immediately change your password!</b>  You can change your password using the <kbd>passwd</kbd> command on the console.</p>
+
+<!--
+<p>Make the following changes to your VM:</p>
+<ol>
+<li> Change the ethernet interface and IP address.
+     <pre> sudo vi /etc/network/interfaces</pre>
+     Change eth0 to eth1.
+     Change the IP address to your assigned IP.
+</li>
+<li> Change the hostname in /etc/hostname to your assigned hostname.</li>
+<li> Change the hostname and IP address in /etc/hosts to your assigned hostname and IP.</li>
+<li> Reboot.  <pre>sudo shutdown -r now</pre></li>
+</ol>
+-->
+
+<p> Use the <kbd>ifconfig</kbd> command to identify the IP address of your VM.  You will use this to connect directly to the VM in the future.</p>
+
+<p> After booting, the VM will be available via an ssh client on port 130 (use the -p option to specify a port, or add an entry to your .ssh/config file.).  You will use the cse306 account and your newly changed password to log in over ssh.</p>
+
+<p> <b>Warning:</b> It is highly advisable that you take a checkpoint of your VM at this point, especially if you intend to modify packages on the VM.  This allows you to rollback the VM to a working state without CS department administrator help (which is not available on the weekends or late at night) if something goes horribly wrong.  The button to take a checkpoint in vSphere is next to the button you used to power on the VM.</p>
+
+<p> Additional notes on checkpointing your VM are posted <a href="http://www.cs.sunysb.edu/facilities/faqs/snapshotvml.htm">here</a>.</p>
+
+<p> <b>Good citizenship.</b>  You have administrator access to this VM and can install anything you like.  That said, to keep load down, DO NOT INSTALL A GRAPHICAL DESKTOP on the VM.  You may tunnel the X protocol (ssh -X) to your local machine and display your editor in a window.</p>
+
+<!--
+
+<h3>Updating qemu</h3>
+
+<p>Unfortunately, the version of qemu included in the lab VMs does not work properly with gdb and JOS.  Please update the installed qemu packages on your VM with these commands:</p>
+
+<pre>
+wget http://www.cs.stonybrook.edu/~porter/courses/cse506/f12/qemu/qemu_0.12.5+noroms-0ubuntu7.10_i386.deb
+
+wget http://www.cs.stonybrook.edu/~porter/courses/cse506/f12/qemu/qemu-common_0.12.5+noroms-0ubuntu7.10_all.deb
+
+wget http://www.cs.stonybrook.edu/~porter/courses/cse506/f12/qemu/qemu-kvm_0.12.5+noroms-0ubuntu7.10_i386.deb
+
+wget http://www.cs.stonybrook.edu/~porter/courses/cse506/f12/qemu/qemu-kvm-extras_0.12.5+noroms-0ubuntu7.10_i386.deb
+
+sudo dpkg -i qemu_0.12.5+noroms-0ubuntu7.10_i386.deb qemu-common_0.12.5+noroms-0ubuntu7.10_all.deb qemu-kvm_0.12.5+noroms-0ubuntu7.10_i386.deb qemu-kvm-extras_0.12.5+noroms-0ubuntu7.10_i386.deb
+</pre>
+
+-->
+
+
+<h3 id="Getting-started-with-git">Getting started with git</h3>
+
+<p>
+Each student will be
+assigned a private git repository initially
+populated with the lab 1 skeleton code.  You will use this repository to turn in your code (see below).
+To download the files into your development environment, you need to <i>clone</i> the
+course repository, by running the commands below.  Substitute your CS netid for USER below.
+</p>
+
+<pre>kermit% <kbd>mkdir ~/cse306</kbd>
+kermit% <kbd>cd ~/cse306</kbd>
+kermit% <kbd>chmod 0700 .</kbd> # (sets appropriate permissions)
+kermit% <kbd>git clone ssh://USER@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-USER lab</kbd>
+
+Initialized empty Git repository in ......./cse306/lab/.git/
+got f6ec6e08634de9b9c4d73ab5af92da16cc610f44
+walk f6ec6e08634de9b9c4d73ab5af92da16cc610f44
+got a8d9dd484df67d928a51127ce4c6d9f6d01c5a6a
+...
+got c9dab101498914dbdce377b89a6eb0f6a421d018
+Checking out files: 100% (44/44), done.
+kermit% <kbd>cd lab</kbd>
+kermit% 
+</pre>
+
+<p>
+Notice that each student will have his or her own git repository hosted on scm; your
+CS user ID should substituted in the URL above (no CS\), and you will also use your CS department account to log into scm.
+</p>
+
+<p>
+For students that do not have a private git repository yet,
+you may use the read-only git repository on the course webpage, using the alternate command below:
+</p>
+<pre>kermit% <kbd>git clone http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git lab</kbd>
+</pre>
+
+<p>
+Git allows you to keep track of the changes you make to the code.
+For example, if you are finished with one of the exercises, and want
+to checkpoint your progress, you can <i>commit</i> your changes
+by running:
+</p>
+<pre>kermit% <kbd>git commit -am 'my solution for lab1 exercise9'</kbd>
+Created commit 60d2135: my solution for lab1 exercise9
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+kermit% 
+
+</pre>
+
+<p>
+You can keep track of your changes by using the <kbd>git diff</kbd> command.
+Running <kbd>git diff</kbd> will display the changes to your code since your
+last commit, and <kbd>git diff origin/lab1</kbd> will display the changes
+relative to the initial code supplied for this lab.
+Here, <tt>origin/lab1</tt> is the name of the git branch with the
+initial code you downloaded from our server for this assignment.
+</p>
+
+<p>We have set up the appropriate compilers and simulators for you on
+the CS lab machines.
+</p>
+
+<h3 id="Hand-In-Procedure">Hand-In Procedure</h3>
+
+<p>Labs will be handed in using the <kbd>make handin</kbd> command.
+This creates a tag in git and pushes the tag and changes to the source repository.
+You must commit all changes you want included in the handin.
+</p>
+
+<p>
+When you are ready to hand in your lab, create a file <tt>slack.txt</tt> noting
+how many late hours you have used both for this assignment and in total.
+(This is to help us agree on the number that you have used.)
+This file should contain a single line formatted as follows (where n is the number of late hours):
+</p>
+<pre>late hours taken: n</pre>
+<p>Then run <kbd>make handin</kbd> in the <tt>lab1</tt> directory.
+<i>If you submit multiple times, we will take the latest
+submission and count late hours accordingly.</i></p>
+
+<p>In this and all other labs, you may complete challenge problems for extra credit.
+If you do this, please create a file called challenge.txt, which includes 
+a short (e.g., one or two paragraph) description of what you did
+to solve your chosen challenge problem and how to test it.
+If you implement more than one challenge problem,
+you must describe each one.
+</p>
+
+<p>
+For answering questions in the labs, you will also have a file called <tt>answers.txt</tt>,
+in which you will write answers to the assigned questions.
+</p>
+
+<h3 id="Migrating-to-your-private-repository">Migrating to your private repository</h3>
+
+<p>If you initially cloned the read-only (http) repository, 
+you must update your git configuration.  
+First, do a <kbd>git pull</kbd> to pull any changes from the read-only source.
+Once you have a private repository for handing in the labs, you should issue this 
+command to add the handin repository (substituting your user ID appropriately):
+</p>
+
+<pre>git remote add handin ssh://USER@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-USER
+</pre>
+
+<p>
+You can double check the 
+<kbd>.git/config</kbd> file to verify the update was successul.
+Initially, the config will look something like this:</p>
+
+<pre>[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	url = http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git
+[branch "lab1"]
+	remote = origin
+	merge = refs/heads/lab1
+</pre>
+
+<p>There should now be a new remote entry like this:</p>
+
+<pre>[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	url = http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git
+[branch "lab1"]
+	remote = origin
+	merge = refs/heads/lab1
+[remote "handin"]
+	fetch = +refs/heads/*:refs/remotes/handin/*
+	url = ssh://USER@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-USER
+</pre>
+
+<!--
+<p>
+
+The URL for the course Git repository is
+<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git">http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git</a>.
+To download the files into your development environment, you need to <i>clone</i> the
+course repository, by running the commands below.
+</p>
+
+<pre>
+kermit% <kbd>mkdir ~/cse306</kbd>
+
+kermit% <kbd>cd ~/cse306</kbd>
+kermit% <kbd>chmod 0700 .</kbd> # (sets appropriate permissions)
+kermit% <kbd>git clone http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab.git lab</kbd>
+
+Initialized empty Git repository in ......./cse306/lab/.git/
+got f6ec6e08634de9b9c4d73ab5af92da16cc610f44
+walk f6ec6e08634de9b9c4d73ab5af92da16cc610f44
+got a8d9dd484df67d928a51127ce4c6d9f6d01c5a6a
+...
+got c9dab101498914dbdce377b89a6eb0f6a421d018
+Checking out files: 100% (44/44), done.
+kermit% <kbd>cd lab</kbd>
+kermit% 
+</pre>
+
+<p>
+
+Git allows you to keep track of the changes you make to the code.
+For example, if you are finished with one of the exercises, and want
+to checkpoint your progress, you can <i>commit</i> your changes
+by running:
+</p>
+<pre>
+kermit% <kbd>git commit -am 'my solution for lab1 exercise9'</kbd>
+Created commit 60d2135: my solution for lab1 exercise9
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+kermit% 
+
+</pre>
+
+<p>
+You can keep track of your changes by using the <kbd>git diff</kbd> command.
+Running <kbd>git diff</kbd> will display the changes to your code since your
+last commit, and <kbd>git diff origin/lab1</kbd> will display the changes
+relative to the initial code supplied for this lab.
+Here, <tt>origin/lab1</tt> is the name of the git branch with the
+initial code you downloaded from our server for this assignment.
+
+</p>
+
+<p>We have set up the appropriate compilers and simulators for you on
+the CS lab machines.
+</p>
+
+<h3>Hand-In Procedure</h3>
+
+<p>
+
+When you are ready to hand in your lab, create a file <tt>slack.txt</tt> noting
+how many late hours you have used both for this assignment and in total.
+(This is to help us agree on the number that you have used.)
+</p>
+
+<p>In this and all other labs, you may complete challenge problems for extra credit.
+If you do this, please add a short (e.g., one or two paragraph) description of what you did
+to solve your chosen challenge problem in slack.txt.</p>
+
+<b>Turnin instruction TBD...</b>
+
+Then run <kbd>make turnin</kbd> in the <tt>lab</tt>
+directory. This will make a tar file for you, and run the CS
+<tt>turnin</tt> program, automatically submitting your work to be
+graded.
+<i>If you submit multiple times, we will take the latest
+submission and count late hours accordingly.</i>
+If you are submitting late, <tt>turnin</tt> will fail,
+and you will need to email <tt>lab1-handin.tar.gz</tt> to the TA.
+</p>
+
+<p>
+You do not need to turn in answers
+to any of the questions in the text of the lab.
+(Do answer them for yourself though!  They will help with the rest of the lab.)
+</p>
+
+<p>
+We will be grading your solutions with a grading program.
+You can run <kbd>make grade</kbd>
+
+to test your solutions with the grading program.
+</p>
+
+-->
+
+<h2 id="Part-1--Assembly-and-C">Part 1: Assembly and C</h2>
+
+<p>
+The purpose of the first exercise
+is to introduce you to x86 assembly language
+and C.
+</p>
+
+<h3 id="Getting-Started-with-C">Getting Started with C</h3>
+
+<div class="required"><div id="Exercise-1" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 1.</span>
+
+	Read about programming with pointers in C.  The best reference
+	for the C language is <i>The C Programming Language</i>
+	by Brian Kernighan and Dennis Ritchie (known as 'K&amp;R').  
+	We recommend that students
+	purchase this book (here is an
+	<a href="http://www.amazon.com/C-Programming-Language-2nd/dp/0131103628/sr=8-1/qid=1157812738/ref=pd_bbs_1/104-1502762-1803102?ie=UTF8&s=books">
+	Amazon Link</a>).
+	There are several copies on reserve in the Science and Engineering library as well.
+	</p>
+	<p>
+	Read 5.1 (Pointers and Addresses) through 5.5 (Character Pointers
+	and Functions) in K&amp;R.  Then download the code for
+	<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/pointers.c">pointers.c</a>, run it, and make sure you
+	understand where all of the printed values come from.  In particular,
+	make sure you understand where the pointer addresses in lines 1 and
+	6 come from, how all the values in lines 2 through 4 get there, and
+	why the values printed in line 5 are seemingly corrupted.
+	</p>
+
+	<p> There are other references on pointers in C, though not
+	as strongly recommended.
+	<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/pointers.pdf">A tutorial by Ted Jensen</a> 
+	that cites K&amp;R heavily is available in the course readings.
+	</p>
+
+	<p>We also recommend reading the <a href="https://blogs.oracle.com/ksplice/entry/the_ksplice_pointer_challenge">Ksplice
+	pointer challenge</a> as a way to test that you understand how
+	pointer arithmetic and arrays work in C.  </p>
+
+	<p>
+	<i>Warning:</i>
+	Unless you are already thoroughly versed in C,
+	do not skip or even skim this reading exercise.
+	If you do not really understand pointers in C,
+	you will suffer untold pain and misery in subsequent labs,
+	and then eventually come to understand them the hard way.
+	Trust us; you don't want to find out what "the hard way" is.
+	</p>
+</div>
+
+<h3 id="Compiling-a-C-program">Compiling a C program</h3>
+
+<p>To compile your lab code, use the <kbd>make</kbd> command, like so:</p>
+
+<pre>$ make
+gcc -Wall -Werror -o my_getpid my_getpid.c
+gcc -m32 -Wall -Werror -nostdlib -static -g -e util_start -o fileutil fileutil.c
+gcc -Wall -Werror -o pointers pointers.c
+gcc -Wall -Werror -o ex1 ex1.c
+$ make
+make: Nothing to be done for `all'.
+</pre>
+
+<p>Make invokes the rules specified in the file 'Makefile'.  These rules specify 
+which binaries should be generated, and make only re-compiles these binaries if your
+source files are newer than the binary (or it does not exist).
+</p>
+
+<p>If you are unfamiliar with <tt>make</tt>, <a href="http://www-cip.physik.uni-bonn.de/pool/infos/make/index.html">here</a> is a
+good introduction.</p>
+
+<p>Internally, <tt>make</tt> uses <tt>gcc</tt> to compile a C program.  
+To learn more about the various command line options for
+<tt>gcc</tt>, type <tt>man gcc</tt> at the command line.</p>
+
+<p><b>Important:</b> Be sure your code compiles with the included makefile.
+This lab has some carefully selected gcc flags that prevent you from accidentally
+using interfaces you should not on this assignment.  Do not use gcc on the command line,
+but learn to use make.</p>
+
+
+<h3 id="Debugging-C-with-gdb">Debugging C with gdb</h3>
+
+<p>To debug a C application, you can type <tt>gdb foo</tt>, where <tt>foo</tt> is the binary name.
+You will typically then type <tt>run</tt> at the command line to start the program.
+</p>
+
+<p>
+You can set address breakpoints in GDB with the <kbd>b</kbd> command.  You
+may use function names, like <tt>main</tt>,
+or you can use virtual addresses.
+You have to start hex numbers with <tt>0x</tt>, so say something like <kbd>b *0x7c00</kbd> sets a
+breakpoint at address 0x7C00. Once at a breakpoint, you can continue
+execution using the <kbd>c</kbd> and
+<kbd>si</kbd> commands: <kbd>c</kbd> causes
+the program to continue execution until the next breakpoint (or until you press
+
+<kbd>Ctrl-C</kbd> in GDB), and <kbd>si
+<i>N</i></kbd> steps through the instructions <i><tt>N</tt></i> at a time.
+</p>
+
+<p>
+To examine instructions in memory (besides the immediate next one to be
+executed, which GDB prints automatically), you use the
+<kbd>x/i</kbd> command.  This command has the syntax
+
+<kbd>x/<i>N</i>i <i>ADDR</i></kbd>, where <i>N</i> is the
+number of consecutive instructions to disassemble and <i>ADDR</i> is the
+memory address at which to start disassembling.
+</p>
+
+<div class="required"><div id="Exercise-2" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 2.</span>
+       Take a look at the <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">lab tools guide</a>,
+       especially the section on GDB commands. Even if you're familiar
+       with GDB, this includes some esoteric GDB commands that are
+       useful for OS work.</p>
+
+       <p>
+	Set a breakpoint at the <tt>main</tt> routine of <tt>pointers</tt>
+	and step through the code.  Print the value of each pointer as it changes
+	and learn to step into the <tt>t</tt> function.
+</p>
+</div>
+
+
+<h3 id="Getting-Started-with-x86-assembly">Getting Started with x86 assembly</h3>
+
+<p>
+If you are not already familiar with x86 assembly language,
+you will quickly become familiar with it during this course!
+The <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/pcasm-book.pdf">PC Assembly Language Book</a>
+is an excellent place to start.
+Hopefully, the book contains mixture of new and old material for you.
+</p>
+
+<p><i>Warning:</i> Unfortunately the examples in the book are
+written for the NASM assembler, whereas we will be using
+the GNU assembler. NASM uses the so-called <i>Intel</i> syntax
+while GNU uses the <i>AT&amp;T</i> syntax. While semantically
+equivalent, an assembly file will differ quite a lot, at least
+superficially, depending on which syntax is used. Luckily the
+conversion between the two is pretty simple, and is covered in
+
+<a href="http://www.delorie.com/djgpp/doc/brennan/brennan_att_inline_djgpp.html">Brennan's Guide to Inline Assembly</a>.
+</p>
+
+<div class="required"><div id="Exercise-3" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 3.</span> (10 points)
+  Skim the 
+<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/pcasm-book.pdf">PC Assembly Language</a> book
+enough that you feel comfortable writing basic x86 assembly,
+know the basic facilities assembly gives you,
+and know where to find help as needed.
+You should skip all sections after 1.3.5 in chapter 1,
+which talk about features of the NASM assembler
+that do not apply directly to the GNU assembler.
+You may also skip chapters 5 and 6, and all sections under 7.2,
+which deal with processor and language features we won't use.
+This reading is useful when trying to understand
+assembly in Linux, and writing your own assembly. If you have never seen
+assembly before, read this book carefully.
+</p>
+<p>
+Also read the section "The Syntax" in
+<a href="http://www.delorie.com/djgpp/doc/brennan/brennan_att_inline_djgpp.html">Brennan's Guide to Inline Assembly</a>
+
+to familiarize yourself with the most important features
+of GNU assembler syntax.  Linux uses the GNU assembler.
+</p>
+<p>Become familiar with inline assembly by writing a simple program.
+Modify the program <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ex1.c">ex1.c</a> to include inline assembly that increments the
+value of x by 1. <b>Add this file to your lab directory so that it is turned
+in for grading with the rest of your code.</b></p>
+</div>
+
+<p>Certainly the definitive reference for x86 assembly language programming
+is Intel's instruction set architecture reference,
+which you can find on
+<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/reference.html">the CSE 306 reference page</a>
+in two flavors:
+an HTML edition of the old
+<a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/i386/toc.htm">80386 Programmer's Reference Manual</a>,
+which is much shorter and easier to navigate than more recent manuals
+but describes all of the x86 processor features
+that we will make use of in CSE 306;
+and the full, latest and greatest
+<a href="http://developer.intel.com/products/processor/manuals/index.htm">
+Intel 64 and IA-32 Combined Software Developer's Manuals</a> from Intel,
+covering all the features of the most recent processors
+that we won't need in class but you may be interested in learning about.
+An equivalent (but even longer) set of manuals is
+<a href="http://www.amd.com/us-en/Processors/DevelopWithAMD/0,,30_2252_739_7044,00.html">available from AMD</a>,
+which also covers the new 64-bit extensions
+now appearing in both AMD and Intel processors.
+</p>
+
+<p>You should read the recommended chapters of the PC Assembly
+book, and "The Syntax" section in Brennan's Guide now.
+Save the Intel/AMD architecture manuals for later
+or use them for reference when you want to look up
+the definitive explanation
+of a particular processor feature or instruction.</p>
+
+
+<h2 id="Part-2--System-calls-in-Linux">Part 2: System calls in Linux</h2>
+
+<p>
+At this point, we will describe the basic mechanism by which programs
+issue system calls to the OS.  First, we will give a bit of background on 
+how system calls work, and then walk through the Linux source code 
+that services system call requests.
+</p>
+
+<h3 id="Where-is-the-OS-kernel-">Where is the OS kernel?</h3>
+
+<p>
+In most operating systems, the OS kernel is loaded into the virtual address space
+of every running program.  For instance, Linux on the 32-bit x86 architecture
+is mapped into the upper Gigabyte of the address space, starting at address <tt>0xf0000000</tt>.
+</p>
+
+<p>
+Note that the virtual address space of a 32-bit processor is 2^32 = 4GB, so this gives
+an effective virtual address space of 3 GB to the application itself, and 1 GB for the kernel.
+</p>
+
+<p>
+So how does the kernel protect itself from an application simply writing over its data structures,
+reading sensitive data, or calling kernel functions directly?
+Well, the memory mapping mechanism also allows the OS to specify which <em>ring</em>
+the CPU must be running in to access the memory region.
+</p>
+
+<h3 id="Protection-rings">Protection rings</h3>
+
+<p>
+The x86 CPU includes four <b>rings</b>, or privilege levels.  Most systems, however,
+only use two rings: ring zero (supervisor, or kernel mode) and ring three (user, or application mode).
+Higher numbered rings are more restricted; this means that they are not allowed to issue
+certain privileged instructions, such as instructions that will interact directly with the hardware.
+Similarly, the page protection mechanisms, which we will learn more about later in the course, 
+can differentiate access permissions by what ring the CPU is currently running in.
+</p>
+
+<h3 id="Switching-between-rings">Switching between rings</h3>
+
+<p>
+So, how does the CPU transition from one ring to another?
+</p>
+
+<p>
+In general, once the CPU has transitioned into ring 3, or user mode,
+the only way to return to kernel mode is through an <em>interrupt</em>.
+An interrupt  can be a hardware event, such as the disk signaling 
+a read or write completion; or it can be an <em>exception</em>, such as 
+a divide by zero; or a <em>trap</em>, where the software manually raises 
+an interrupt.</p>
+
+<p>
+On the x86 architecture, interrupts are assigned a specific 8-bit value
+(remember 2^8==256).  For instance, a divide-by-zero exception is given 
+interrupt number 0.  
+This value serves as an index into the <em>interrupt
+descriptor table</em>, or IDT, where the kernel can register a handler 
+function that is called when an interrupt fires.
+This is similar in some respects to registering an event handler in
+an event-driven program.
+</p>
+
+<p>
+The IDT also specifies which ring the handler runs in; in general,
+the ring will be zero.
+So, any software that can cause a specific interrupt will cause the CPU
+to switch to ring zero and start executing a specific function.
+</p>
+
+<p>
+Some interrupt numbers are assigned by the hardware manufacturer.
+Intel reserves interrupts 0--31 for exceptions, and by convention, 
+the next 16 or so are typically used for device interrupts.
+</p>
+
+<p>
+But what about the other 212 interrupt descriptors?  These 
+are under the control of the kernel.
+The most common use of an interrupt handler is to service <em>traps</em>
+or <em>system calls</em> from an application. 
+For instance, Linux picked index $0x80, or 128, for its system call 
+interrupt.  Windows, in contrast uses $0x2e, or 46.
+Which interrupt to use is up to the OS---there is nothing magical about 128 vs. 46.
+</p>
+
+<p>
+So, what does this look like in code?  Well, if you disassemble a binary that makes
+a system call, you may see a line that looks like this:
+</p>
+<pre>int $0x80
+</pre>
+<p>The <tt>int</tt> instruction raises a specific interrupt 
+in software, rather than requiring hardware to raise the interrupt.
+In other words, this code causes control to jump to the function specified 
+for interrupt handler $0x80, running in ring zero.
+</p>
+
+<p>
+The kernel can return control back to the application using the <tt>iret</tt>,
+or return from interrupt,
+instruction.  This instruction reloads the application's register state
+and returns to ring 3.</p>
+
+<h3 id="System-calls">System calls</h3>
+
+<p>
+A system call, then, is just a public function that the kernel provides
+to the application, and executes on the application's behalf.
+Common examples include reading and writing to a file,
+allocating memory, or terminating the program.
+</p>
+
+<p>
+System calls are generally implemented using an interrupt handler,
+and pass arguments using specific registers.  This is called a <em>calling 
+convention</em>, and we will discuss this more later.
+</p>
+
+<p>
+At this point, you may be asking yourself, why not just issue a function call directly
+into the kernel?  The answer is primarily so that the kernel
+can protect itself from a buggy or malicious program.  
+For instance, the system call function may validate that the input arguments make sense,
+and then call an internal function that does the work.
+If an application were able to call the internal function directly, the application
+could circumvent these input parameter checks, and potentially damage the kernel.
+</p>
+
+<h3 id="Linux-system-call-entry-point">Linux system call entry point</h3>
+
+<p>
+A very helpful resource in browsing the Linux source code is the Linux
+Cross-Reference (LXR), located at <a href="http://lxr.linux.no/">http://lxr.linux.no/</a>.
+This site includes a number of useful features that can help you 
+find your way through the source code.</p>
+
+<p>
+Another helpful reference for this code is Chapter 10 of "Understanding the Linux Kernel",
+which describes the system call mechanism of Linux.</p>
+
+<p>
+Linux places all architecture-specific code in the <tt>arch</tt>
+directory.  So for x86-specific code, look under <tt>arch/x86</tt>.
+Note that older kernels treated 32 and 64-bit x86 as different architecture
+(i386 and x86_64, respectively), however, in more recent versions
+these have been combined.  However, under the x86 directory, there may be
+two versions of a file, one with a _32 and another with an _64.</p>
+
+<p>
+So, the entry point for a system call issued by the <tt>int</tt> instruction
+is in <a href="http://lxr.linux.no/linux+*/arch/x86/kernel/entry_32.S#L506">
+arch/x86/kernel/entry_32.S</a>, function <tt>system_call</tt>.
+Note that the .S suffix means this file is written in assembly.
+</p>
+
+<p>
+In the next exercise, you will walk through this function
+and try to understand what the assembly code is doing.
+But let's jump ahead to the key line <a href="http://lxr.linux.no/linux+*/arch/x86/kernel/entry_32.S#L518">here</a>:
+</p>
+<pre>call *sys_call_table(,%eax,4)
+</pre>
+<p>
+This code is starting with the value in the eax register,
+multiplying it by four (i.e., byte aligning it),
+adding it to the pointer <tt>sys_call_table</tt>,
+reading the 32-bit word at this address, 
+and then using that word as a function address and calling that function.
+Put differently, Linux constructs a table called <tt>sys_call_table</tt>
+(generated from the file <a href="http://lxr.linux.no/#linux+v3.7.5/arch/x86/syscalls/syscall_32.tbl">
+arch/x86/syscalls/syscall_32.tbl</a>).
+When converted to assembly, the table looks more like this:
+</p>
+<pre>ENTRY(sys_call_table)
+        .long sys_restart_syscall       /* 0 - old "setup()" system call, used for restarting */
+        .long sys_exit
+        .long sys_fork
+        .long sys_read
+        .long sys_write
+        .long sys_open          /* 5 */
+        .long sys_close
+        .long sys_waitpid
+        .long sys_creat
+        .long sys_link
+        .long sys_unlink        /* 10 */
+        .long sys_execve
+</pre>
+<p>
+When compiled to machine code, this forms a list of 4-byte function addresses.
+The value in the eax register, then, essentially serves as
+an index into this list.
+So, in the code above, if <tt>eax</tt> is set to 5 when the <tt>int $0x80</tt>
+instruction is issued,
+the kernel will call the <tt>sys_open</tt> function.
+If <tt>eax</tt> is set to 2, the kernel will call <tt>sys_fork</tt>, etc.
+</p>
+
+<div class="required"><div id="Exercise-4" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 4.</span> (10 points)
+	Carefully read the system call assembly code.
+	Do your best to understand what this assembly code is doing---it will 
+	help you with the coding part of this assignment.
+	<br>
+	Hint: Read the comments at the top of the file, and note that,	by
+	convention, functions in all capitals are macros that are often 
+	defined in the same file (if not, LXR can help you find them).
+	<br>
+	Specifically, answer these questions in <tt>answers.txt</tt> in your hand-in:
+	<br>
+	1) What is happening at line 515:</p>
+	<pre>	cmpl $(NR_syscalls), %eax
+	</pre>
+	<p>
+	2) When an interrupt comes in, the CPU pushes the general purpose registers
+	onto the stack.  These can be identified based on the offset from the 
+	stack pointer (stored in <tt>esp</tt>).  Note that stacks "grow down", so 
+	every time something is pushed onto the stack, <tt>esp</tt> is decremented by four.
+	<br>
+	<b>In your write-up, identify the six registers closest to <tt>esp</tt>
+	and which system call argument they store</b>.  These are the (up-to) six input values to a system call.  System calls which take fewer arguments simply ignore the values in the other registers.
+</p></div>
+
+<p>So, to summarize, the <tt>eax</tt> register stores the system call number,
+and six registers are used to pass in the system call arguments, 
+which are then pushed onto the stack.
+If you find the declaration of a sytem call, such as <a href="http://lxr.linux.no/linux+*/include/linux/syscalls.h#L522">sys_open</a>,
+you will see it declared with the special term <tt>asmlinkage</tt>.
+This means that the input arguments are pushed on the stack, as above.
+(Note that the implementation of most system calls uses a SYSCALL_DEFINE() macro,
+as <a href="http://lxr.linux.no/linux+*/fs/open.c#L935">here</a>).
+</p>
+
+<p>
+The way that input values are passed to a function is called a <b>calling convention</b>.
+As the name implies, this is something developers agree on by convention.
+The decision about where each input parameter is placed is somewhat arbitrary (although
+there are some good technical reasons for these choices).
+In general, C uses a different calling convention, where some arguments are passed in registers.
+</p>
+
+<p>So what about the return value from a system call?
+This is returned in the <tt>eax</tt> register.
+By convention, zero or a positive value usually means success, and a negative
+value indicates an error number (defined in one of several errno header files, such as 
+<a href="http://lxr.linux.no/#linux+v3.7.5/include/uapi/asm-generic/errno-base.h">this one</a>.
+</p>
+
+<h3 id="Writing-your-own-system-calls">Writing your own system calls</h3>
+
+<p>Now that you should understand the basics of system calls, we are going to write our
+own system call function, using inline assembly.</p>
+
+<div class="required"><div id="Exercise-5" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 5.</span> (25 points)
+	 Implement the inline assembly macros in mysyscall.h, which call
+	 the syscall indicated by NUM.  You will need to figure out how to pass
+	 arguments to and from assembly (see Brennan's guide, above), and which
+	 registers to use.
+	 <br>
+	 Then, use these macros to implement your own getpid() system call
+	 in the my_getpid.c file.
+	 The code will compare the result with the libc system call,
+	 and indicate whether your call succeeded.
+	 You will need to search through the Linux source code
+	 for the appropriate system call number and number of 
+	 arguments.
+	 <br>
+	 Advice: You will be using this header later, so as you discover the 
+	 signature of a system call, you might create a macro for it in the 
+	 mysyscall.h header.
+</p></div>
+
+<h2 id="Part-3--Using-system-calls">Part 3: Using system calls</h2>
+
+<p>
+In the last part of the lab, you will write a simple file manipulation tool.
+The interesting part of this exercise is that you <b>will not use libc</b>.
+Rather, you will implement libc-like functionality using system calls directly.
+</p>
+
+<p>
+To get you started, we have written some skeleton code in <tt>fileutil.c</tt>
+which will start you in a main function, and give you input arguments.
+We have also called the exit() system call stub at the end (although this must first
+be implemented in <tt>mysyscall.h</tt>, or else the program will crash or hang.
+</p>
+
+<p>
+To step through the program in gdb and see what it is doing (without printf), do this:
+</p>
+<pre>$ gdb ./fileutil 
+GNU gdb (Ubuntu/Linaro 7.4-2012.04-0ubuntu2.1) 7.4-2012.04
+Copyright (C) 2012 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+For bug reporting instructions, please see:
+&lt;http://bugs.launchpad.net/gdb-linaro/&gt;...
+Reading symbols from /home/donimal/cse306-s13/assignments/lab1/fileutil...done.
+(gdb) break main
+Breakpoint 1 at 0x80480c3: file fileutil.c, line 19.
+(gdb) run a b c
+Starting program: /home/donimal/cse306-s13/assignments/lab1/fileutil a b c
+
+Breakpoint 1, main (argc=4, argv=0xffffd3fc) at fileutil.c:19
+19	  int return_code = argc;
+</pre>
+
+<div class="required"><div id="Exercise-6" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 6.</span> (55 points)
+	 Complete the fileutil program, as described below. <b>Do not use libc,</b> but rather, expand
+	 the use of your own system call macros, implemented in mysyscall.h.
+	 <br>
+	 The program should build on the course VMs, using the 'make'
+	 command.  The program should take arguments as follows:
+	 </p>
+	 <pre>	 fileutil [-cdhru] infile|- outfile|-
+	 </pre>
+	 <p>
+	 The program will read infile and write outfile, or write to standard 
+	 output if given '-'.  The program will also take the following options (any, all, or none):
+	 </p>
+	 <ul>
+	 <li>-c: Count the newlines in the file and output this on stderr (file handle 2)</li>
+	 <li>-d: Convert the output to use DOS-style newlines (carriage-return, line feed).  Display an error message and help if used with -u. </li>
+	 <li>-h: Print a help message and exit.</li>
+	 <li>-r: Reverse the contents of the file, on a line-by-line basis. For instance: "I love CSE 306.\nCSE 306 is fun!\n" should appear as "CSE 306 is fun!\nI love CSE306.\n".</li>
+	 <li>-u: Convert the output to use Unix-style newlines (line feed only).  Display an error message and help if used with -d.</li>
+	 </ul>
+	 <p>
+	 The file names given as input can be any kind of files: relative pathnames
+or absolute ones.  The input file must exist before the program can succeed.
+The output file may or may not exist: if it exists, it's OK to overwrite it
+but only if you won't damage the input file (i.e., the infile and outfile
+may be the same).
+    <br>
+    You should support both syntax like</p>
+    <pre>    fileutil -cdr in.txt out.txt
+    </pre>
+    <p>
+    as well as</p>
+    <pre>    fileutil -c -d -r in.txt out.txt
+    </pre>
+    <p>although this is a lower-priority feature.
+    <br>
+    As special names, if infile is "-", you should read from stdin.  If outfile
+is "-", you should output to stdout.  That way, you can use the fileutil
+program as a "Unix filter" such as
+	</p>
+	<pre>$ cat foo.in | ./fileutil -d - foo.out
+or
+$ ./fileutil foo.in - &gt; foo.out
+</pre>
+	<p>
+	The program should check for EVERY POSSIBLE ERROR that could occur BEFORE
+opening the input and output files and while changing the file data.  In
+the case of a possible error, the program should print a detailed error
+message on stderr and exit with a non-zero status code.  This means that you
+should, for example, check that the input files are readable, that you have
+permission to read and/or write them (as needed), that neither is a
+directory, character/block special device, etc.  Other errors could occur,
+and it is your job to write the code that checks for all of those
+conditions.  (A good way to think about it is to inspect manual pages for
+the system calls that you use, and think to yourself "what else could go
+wrong when this function runs").  Some of the more complex error conditions
+for which you should check is running out of disk space or quota, or when
+the two file arguments use different names but actually point to the same
+file (do not try to modify a file in place -- this may corrupt the
+file).
+	<br>
+	<br>
+Many of the possible errors are listed on the analogous libc manual page.
+For instance, you might look at <tt>man 2 open</tt> to learn all possible
+return values (however, the error will be a directly returned as a negative 
+value, not placed in <tt>errno</tt>).
+       <br>
+       <br>
+       You are welcome to include the definitions in standard header files,
+       but you may not link against libc, or include .c files from the libc source.
+<br>
+	<br>
+<b>NEWLINE EXAMPLES:</b>
+	 <br>
+	 <br>
+	 The files <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/test-input-unix.txt">test-input-unix.txt</a> and 
+	 <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/test-input-dos.txt">test-input-dos.txt</a> give examples of both 
+	 Unix and DOS-style newlines, which you may use to check your newline conversion code.
+	 <br>
+	 <br>
+<b>Hints and common pitfalls:</b>
+	 <br>
+	 <br>
+	 When you use the open system call to create a new file (using the O_CREAT) option, be sure to specify a valid mode, such as 0755.  If you find yourself 
+	 using sudo to read or delete the file, the likely culprit is a bad mode argument.
+	 <br>
+	 <br>
+<b>STYLE AND MORE:</b>
+<br>
+<br>
+Aside from testing the proper functionality of your code, we will also
+evaluate the quality of your code.  Be sure to use a consistent style, well
+documented, and break your code into separate functions and/or source files
+as it makes sense.
+<br>
+<br>
+To be sure your code is very clean, it must compile with "gcc -Wall -Werror"
+without any errors or warnings!
+<br>
+<br>
+If the various sources you use require common definitions, then do not
+duplicate the definitions.  Make use of C's code-sharing facilities.
+<br>
+<br>
+You must include a README file with this and any assignment.  The README
+file should describe what you did, what approach you took, results of any
+measurements you made, which files are included in your submission and what
+they are for, etc.  Feel free to include any other information you think is
+helpful to us in this README; it can only help your grade.
+<br>
+<br>
+<b>STRATEGIES:</b>
+<br>
+<br>
+If you are not a confident C programmer, 
+one strategy is to <i>temporarily</i> allow libc so that you can 
+figure out the high-level program logic first.  This can be done by 
+removing the <tt>-nostdlib</tt> logic from your Makefile.  Once this verison of the 
+code works, you could then disable libc and use the system call definitions in <tt>mysyscall.h</tt>.  <b>Nota bene: Submissions using libc will not receive full credit.</b>
+<br>
+<br>
+Another strategy is to implement unit test cases for every system call you think you need, so you can debug the system call independently of your larger assignment.
+</p>
+</div>
+
+<p>
+For extra credit, you may do the following challenge problems:
+</p>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (5 bonus points)
+	 Add a compression option to the file utility,	
+	 that outputs the file as a gnuzip, bzip2, or other
+	 standard algorithm.  You may look at code from standard compression libraries,
+	 but you may not include libc (and thus, simply importing a compression library will not work).
+	 <br>Be sure to note this in challenge.txt
+	 if you do this.
+</p></div>
+
+
+<p>
+<b>This completes the lab.</b>
+Type <kbd>make handin</kbd> in the <tt>lab1</tt> directory.
+After successful submission, you should receive a confirmation email (although you may need to try twice to get the email).
+If submission fails, double check that you have committed all of your changes, followed the instructions to add the handin repository, and read any error messages carefully before emailing the TAs for help.
+</p>
+
+<hr>
+<p class="lastupdated">Last updated: Mon Mar 04 13:08:23 -0500 2013
+ [<a href="http://validator.w3.org/check?uri=referer">validate xhtml</a>]</p>
+
+
+</body></html>

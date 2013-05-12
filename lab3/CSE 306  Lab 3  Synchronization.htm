@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0065)http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>CSE 306: Lab 3: Synchronization</title>
+<link rel="stylesheet" type="text/css" href="./CSE 306  Lab 3  Synchronization_files/style.css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript" src="./CSE 306  Lab 3  Synchronization_files/util.js">
+</script><style type="text/css"></style>
+</head>
+<body class=" hasGoogleVoiceExt"><div class="jump-hdr"><div class="jump-section">Sections ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#CSE-306--Lab-3--Synchronization" style="padding-left: 0em; background-color: rgb(192, 192, 255); background-position: initial initial; background-repeat: initial initial;">CSE 306: Lab 3: Synchronization</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Introduction" style="padding-left: 1em;">Introduction</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Getting-started" style="padding-left: 2em;">Getting started</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Sharing-code-with-a-partner" style="padding-left: 2em;">Sharing code with a partner</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Hand-In-Procedure" style="padding-left: 2em;">Hand-In Procedure</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#DNS-Background" style="padding-left: 1em;">DNS Background</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Tries" style="padding-left: 1em;">Tries</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Thread-Programming-Guidelines" style="padding-left: 1em;">Thread Programming Guidelines</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Getting-started-with-the-code" style="padding-left: 1em;">Getting started with the code</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#-Testing-on-a-multi-core-machine" style="padding-left: 2em;"> Testing on a multi-core machine</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Squatting" style="padding-left: 2em;">Squatting</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Acknowledgements" style="padding-left: 2em;">Acknowledgements</a></div></div><div class="jump-section">Exercises ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Exercise-1">Exercise 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Exercise-2">Exercise 2</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Exercise-3">Exercise 3</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab3.html#Exercise-4">Exercise 4</a></div></div><div class="jump-section">References ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Lab tools guide</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/i386/toc.htm">80386 manual</a><div>IA32</div><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-1.pdf" style="padding-left: 1em;">Basic architecture</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2A.pdf" style="padding-left: 1em;">Instruction set A-M</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2B.pdf" style="padding-left: 1em;">Instruction set N-Z</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3A.pdf" style="padding-left: 1em;">System programming 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3B.pdf" style="padding-left: 1em;">System programming 2</a></div></div></div>
+<h1 id="CSE-306--Lab-3--Synchronization">CSE 306: Lab 3: Synchronization</h1>
+<div id="topnavbar">
+<ul class="topnavlist">
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/index.html">Home</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/syllabus.html">Schedule</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/policies.html">Syllabus</a></li>
+<!--<li><a href="tentativeschedule.html">Tentative schedule</a></li>-->
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/labs.html">Labs</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Tools</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/reference.html">Reference</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/announcements.html">Announcements</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/mailing.html">Mailing List</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="./CSE 306  Lab 3  Synchronization_files/labs.js"></script>
+
+
+<p>
+<b>Due 11:59 PM, Monday, April 15, 2013</b>
+</p>
+
+<h2 id="Introduction">Introduction</h2>
+
+<p>
+
+In this lab you will develop a multi-threaded simulation of the Internet's 
+Domain Name System (DNS),
+which maps host names onto human readable addresses.
+</p>
+
+<p>We are not going to build a true DNS server, but, for simplicity, are instead writing a 
+simulator of the typical requests a DNS server would see (and one that is 
+unique to our system).</p>
+
+<p>The course staff have provided you with a simple, sequential implementation.
+The sequential implementation will need synchronization to work properly with 
+multiple threads.
+Your job will be to create several parallel verions of increasing sophistication.
+</p>
+
+<h3 id="Getting-started">Getting started</h3>
+
+<p>
+We will provide you with some initial source code to start from.
+To fetch that source, use Git to commit your Lab 2 source,
+fetch the latest version of the course repository,
+and then
+create a local branch called <tt>lab3</tt> based on our lab3
+branch, <tt>origin/lab2</tt>:
+</p>
+<pre>kermit% <kbd>cd ~/CSE306/lab</kbd>
+kermit% <kbd>git commit -am 'my solution to lab2'</kbd>
+Created commit 254dac5: my solution to lab2
+ 3 files changed, 31 insertions(+), 6 deletions(-)
+kermit% <kbd>git pull</kbd>
+
+Already up-to-date.
+kermit% <kbd>git checkout -b lab3 origin/lab3</kbd>
+Branch lab3 set up to track remote branch refs/remotes/origin/lab3.
+Switched to a new branch "lab3"
+kermit% 
+</pre>
+
+
+<p>
+The <kbd>git checkout -b</kbd> command shown above actually does two
+things: it first creates a local branch <tt>lab3</tt> that is
+based on the <tt>origin/lab3</tt> branch provided by the course
+staff, and second, it changes the contents of your <tt>lab</tt>
+
+directory to reflect the files stored on the <tt>lab3</tt> branch.
+Git allows switching between existing branches using <kbd>git
+checkout <i>branch-name</i></kbd>, though you should commit any
+outstanding changes on one branch before switching to a different
+one.
+</p>
+
+<p>
+You will now need to merge the changes you made in your <tt>lab2</tt> 
+branch into the <tt>lab3</tt> branch, with the <kbd>git merge lab2</kbd> command.
+</p>
+
+<p>
+In some cases, Git may not be able to figure out how to merge your changes with
+the new lab assignment (e.g. if you modified some of the code that
+is changed in the second lab assignment).  In that case, the <kbd>git
+merge</kbd> command will tell you which files are <i>conflicted</i>,
+and you should first resolve the conflict (by editing the relevant files)
+and then commit the resulting files with <kbd>git commit -a</kbd>.
+</p>
+
+<p>
+Lab 3 contains the  new source files in the lab3 directory.
+</p>
+
+<h3 id="Sharing-code-with-a-partner">Sharing code with a partner</h3>
+
+<p><b>Unless we hear otherwise from you, we will assume you are working with 
+the same partner as lab 2</b>.  You are welcome to change partners if you like;
+if you do, please email the course staff immediately to change permissions on your 
+repositories.</p>
+
+<p>We will set up group permission to one partner's git repository on scm.  
+Suppose Partner A is the one handing in the code.  Partner A should follow the instructions
+above to merge the lab3 code.  
+After Partner A has pushed this change to scm, 
+Partner B should simply clone Partner A's repository
+and use it.  For example:</p>
+
+<pre>kermit% <kbd>git clone ssh://PartnerB@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-PartnerA lab3</kbd>
+</pre>
+
+<p>Note that it may take a few days about letting the course staff know your partner
+selection for the tech staff to apply these permission changes.
+Again, you are not required to use git to coordinate changes, only to hand in the assignment, 
+but we recommend you learn
+to use git.  You may use any means you like to share code with your partner.
+</p>
+
+
+<h3 id="Hand-In-Procedure">Hand-In Procedure</h3>
+
+<p>
+When you are ready to hand in your lab code and write-up,
+create a file called <tt>slack.txt</tt> noting how many
+late hours you have used both for this assignment and in
+total. (This is to help us agree on the number that you have used.)
+This file should contain a single line formatted as follows (where n is the number of late hours):
+</p>
+<pre>late hours taken: n</pre>
+<p>
+Then run <kbd>make handin</kbd> in the <tt>labs</tt> directory.
+<i>If you submit multiple times, we will take the latest
+submission and count late hours accordingly.</i></p>
+
+<p>In this and all other labs, you may complete challenge problems for extra credit.
+If you do this, please create a file called challenge.txt, which includes 
+a short (e.g., one or two paragraph) description of what you did
+to solve your chosen challenge problem and how to test it.
+If you implement more than one challenge problem,
+you must describe each one.
+</p>
+
+<p>This lab does not include any questions for you to answer,
+but you should document your design in the README file.</p>
+
+
+<h2 id="DNS-Background">DNS Background</h2>
+
+<p>
+DNS maps human-readable host names onto IP addresses.  For instance,
+it maps the name <tt>www.cs.stonybrook.edu</tt> to the IP address <tt>130.245.27.2</tt>.
+</p>
+
+<p>
+Each computer on the internet is configured to use one or more DNS servers
+for name resolution.  On a Linux system, the server used often stored in <tt>/etc/resolv.conf</tt>.
+Note that the servers are listed by IP address, otherwise the system
+would have an infinite recursion!</p>
+
+<p>
+By convention, DNS servers typically run on port 53.</p>
+
+<p>
+In resolving hostnames, resolution is actually done <em>backwards</em>.
+For example, in resolving <tt>www.cs.stonybrook.edu</tt>,
+a server will start by figuring out which server is responsible for
+the <tt>.edu</tt> domain, then query this server to find out the authoritative
+DNS server for <tt>stonybrook.edu</tt>, then query that server to find the authoritative
+DNS server for <tt>cs.stonybrook.edu</tt>, which then responds with the address
+of the server named <tt>www</tt>.
+In general, servers cache previously resolved addresses, so that a subsequent request 
+for the same host name can be serviced more quickly.  
+</p>
+
+<p>If you are curious to learn more about DNS, the <a href="http://en.wikipedia.org/wiki/Domain_Name_System">Wikipedia article</a> is a good place to start.</p>
+
+<h2 id="Tries">Tries</h2>
+
+<p>In our DNS simulation, we will use a trie to store the mappings of host names
+to IP addresses.  A trie is a space-optimized search tree.  The key difference between
+a trie and a typically search tree is that part of the search key is encoded
+by the position in the tree.
+</p>
+
+<p>Consider the illustration to the right:
+<img src="./CSE 306  Lab 3  Synchronization_files/trie.jpg" style="float:right" alt="Trie Illustration">
+The root simply contains a list of top-level domains (.com, .edu, ...).  
+Each node has a list of children.  This is a simple example, so under .com,
+there is only a 'k' character, which then has children 'as' and 'faceboo', 
+which encode 'ask.com' and 'facebook.com'.  Similarly, the '.edu' sub-tree
+encodes 'saybrook.edu' and 'stonybrook.edu'.
+</p>
+
+<p>The key space-saving property of a trie is that common substrings 
+can be coalesced into a single interior node.
+Technically, we are building a "reverse" trie, since most 
+tries that store a string would compare from left-to-right, not
+right-to-left, as we are doing.
+Finally, note that a DNS server doesn't necessarily have to use a trie,
+many DNS servers use Red-black trees or other trees for various reasons.
+</p>
+
+<p>We have provided you with a simple interface in <tt>trie.h</tt>
+and a sequential implementation in <tt>sequential-trie.c</tt>.
+<b>Do not use this implemnetation with more than one thread---it will
+break because it does not use any synchronization!</b></p>
+
+<p>As before, if you are curious to learn more about tries, 
+the <a href="http://en.wikipedia.org/wiki/Trie">Wikipedia article</a> is a good place to start.</p>
+
+<h2 id="Thread-Programming-Guidelines">Thread Programming Guidelines</h2>
+
+<p> Before you begin the assignment, (re-)read <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/papers/programming-with-threads.pdf">Coding Standards for
+Programming with Threads</a>. You are required to follow these
+standards for this project. Because it is impossible to determine the
+correctness of a multithreaded programming via testing, grading on
+this project will primarily be based on reading your code not by
+running tests. Your code must be clear and concise. If your code is
+not easy to understand, then your grade will be poor, even if the
+program seems to work. In the real world, unclear multi-threaded code
+is extremely dangerous -- even if it "works" when you write it, how
+will the programmer who comes after you debug it, maintain it, or add
+new features? Feel free to sit down with the TA or instructor during
+office hours for code inspections before you turn in your project.
+</p>
+
+<p> Programming multithreaded programs requires extra care and more
+discipline than programming conventional programs. The reason is that
+debugging multithreaded programs remains an art rather than a science,
+despite more than 30 years of research. Generally, avoiding errors is
+likely to be more effective than debugging them. Over the years a
+culture has developed with the following guidelines in programming
+with threads. Adhering to these guidelines will ease the process of
+producing correct programs: </p>
+
+<ol>
+<li>All threads  share  heap data. This requires you to use proper synchronization primitives whenever two threads modify or read the shared data. Sometimes, it is obvious how to do so:
+<pre>          char a[1000]
+          void Modify(int m, int n)
+          {
+          ;      a[m + n] = a[m] + a[n];         &nbsp;            &nbsp; // ignore bound checks
+          }
+</pre>
+     If two thread will be executing this function, there is no guarantee that both will perceive consistent values of the members of the array a. Therefore, such a statment has to be protected by a mutex that ensures the proper execution as follows:
+<pre>          char a[1000]
+          void Modify(int m, int n)
+          {
+                Lock(p);
+                a[m + n] = a[m] + a[n];         &nbsp;            &nbsp; // ignore bound checks
+                Unlock(p);
+          }
+</pre>
+     where p is a synchronization variable. </li>
+
+<li>Beware of the hidden data structures! While your own variables on
+the heap must be protected, it is also necessary to ensure that data
+structures belonging to the libraries and runtime system also be
+protected. These data structures are allocated on the heap, but you do
+not see them. Access to library functions can create situations where
+two threads may corrupt the data structures because proper
+synchronization is lacking. For example, two threads calling the
+memory allocator simultaneously through the malloc() library call
+might create problems if the data structures of malloc() are not
+designed for concurrent access. In that case, data structures used to
+track the free space might be corrupted. The solution is to use a
+thread-safe version of libc.  
+<br> 
+Linking with the <tt>-pthread</tt> 
+flag (included in your Makefile) is sufficient for libc using gcc.
+Other compilers may require the <kbd>-D_POSIX_PTHREAD_SEMANTICS</kbd>
+flag to select thread-safe versions.
+<br>
+Finally, not all libraries support thread-safe functions.  If you include
+extra libraries in your code, it is up to you to figure out whether they are thread safe,
+or if calls must be protected by a lock.</li>
+
+<li> <b>Simplicity of the code is also an important factor in ensuring
+correct operation.</b> Complex pointer manipulations may lead to
+errors and a runaway pointer may start corrupt the stacks of various
+threads, and therefore manifesting its presence through a set of
+incomprehensible bugs. Contrived logic, and multiple recursions may
+cause the stacks to overflow. Modern computer languages such as Java
+eliminate pointers altogether, and perform the memory allocation and
+deallocation by automatic memory management and garbage collection
+techniques. They simplify the process of writing programs in general,
+and multithreaded programs in particular. Still, without understanding
+of all the pitfalls that come with programming multithreaded
+applications, even the most sophistica ted programmer using the most
+sophisticated language may fall prey to some truly strange bugs. </li>
+</ol>
+
+<h2 id="Getting-started-with-the-code">Getting started with the code</h2>
+
+<p>We have provided you with a sequential (single-threaded only)
+implementation of a reverse trie, and a testing framework.
+Take a few minutes to read and understand the source files:</p>
+<table style="text-align:center;">
+<tbody><tr><td><tt>main.c</tt></td>
+    <td>Testing framework, options and start-up code.  You shouldn't need to modify this file.</td></tr>
+<tr><td><tt>trie.h</tt></td>
+    <td>Function definitions for your trie(s).</td></tr>
+<tr><td><tt>sequential-trie.c</tt></td>
+    <td>A single-threaded trie implementation.  You may copy from this file as a starting point in the exercies below, or write your own trie.</td></tr>
+</tbody></table>
+
+<p>Note that typing <kbd>make</kbd> generates four different executables.
+Currently, only <kbd>dns-sequential</kbd> will work, and only with one thread.
+You will create concurrent variations of the trie, which all share the code in <tt>main.c</tt>,
+and interface definition in <tt>trie.h</tt>.
+</p>
+
+<div class="required"><div id="Exercise-1" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 1.</span> (15 points)
+  Implement a thread-safe trie in <tt>mutex-trie.c</tt>, using coarse-grained locking.
+  In other words, for this exercise, it is sufficient to have one lock for the entire trie.
+  To complete this exercise, we recommend using pthread mutex functions,
+  including <code>pthread_mutex_init</code>, <code>pthread_mutex_lock</code>, 
+  and <code>pthread_mutex_unlock</code>.
+  <br>
+  Be sure to test your code by running with <kbd>dns-mutex -c XXX</kbd> 
+  (where XXX is an integer greater than 1), in order to check that the code works properly.
+  Because multi-threaded code interleaves memory operations non-deterministically, it may work
+  once and fail a second time---so test very thoroughly and add a lot of assertions to your code.
+</p></div>
+
+<h3 id="-Testing-on-a-multi-core-machine"> Testing on a multi-core machine</h3>
+
+<p>You will be given access to a machine with more than 1 CPU so that you can test your code.
+Details to be posted here once the machine is available.  We highly recommend
+you take advantage of this machine, as some bugs may only manifest with multiple CPUs.</p>
+
+<p>Specifically, use your CS user id to ssh to sbrocks.cewit.stonybrook.edu, where you can build and
+test your code with more than one CPU.</p>
+
+<div class="required"><div id="Exercise-2" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 2.</span> (15 points)
+  Implement a trie which allows concurrent readers, but mutually excludes writers
+   in <tt>rw-trie.c</tt>, using coarse-grained locking.
+  In other words, for this exercise, it is still sufficient to have one lock for the entire trie.
+  To complete this exercise, we recommend using pthread mutex functions,
+  including <code>pthread_rwlock_init</code>, <code>pthread_rwlock_rdlock</code>, etc.
+  <br>
+  Be sure to test your code by running with <kbd>dns-rw -c XXX</kbd> 
+  (where XXX is an integer greater than 1), in order to check that the code works properly.
+  Because multi-threaded code interleaves memory operations non-deterministically, it may work
+  once and fail a second time---so test very thoroughly and add a lot of assertions to your code.
+</p></div>
+
+<h3 id="Squatting">Squatting</h3>
+
+<p>Web sites register a domain name for a period of time---generally in years.
+Before the name expires, the owner must renew the registraton.
+If the owner forgets, another user can quickly register the name to a different site,
+and charge the original owner a fee to buy back their own domain.
+This practice, as well as the practice of buying domain names on speculation that
+a business may want them later, is called squatting.
+</p>
+
+<p>In practice, squatters will monitor the expiration time of a registration,
+and then race with the owner to renew after the expiration.
+For our simple simulation, we will do something simpler.
+</p>
+
+<p>In our current trie implmentations, if someone tries to <tt>insert</tt>
+a name that already exists, the insertion simply fails.
+If a DNS simulation is started with the <tt>-q</tt> option,
+this will set a global variable <tt>allow_squatting</tt>.
+If squatting is allowed, the behavior of <tt>insert</tt>
+should change to block if the name already exists,
+waking the thread up once the name is delted (we don't expire nodes 
+in our simulation, only explicitly delete them).
+</p>
+
+<p>You will need to modify each trie implementation, 
+<b>including <tt>sequential-trie.c</tt></b>,
+to support this behavior.</p>
+
+<div class="required"><div id="Exercise-3" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 3.</span> (30 points)
+	 Add squatting support to each of the tries you have implemented so far.
+  <br>	
+  In addition to the normal tests, we have also created squatting stress tests,
+  which are invoked with the <kbd>-t</kbd> option.
+  Be sure that this test doesn't simply hang all of your threads.
+  <br>
+  Note: You do not need to support squatting in the sequential trie.  It is ok if 
+  all threads block squatting---just be sure that if your implementation hangs, 
+  it is because of squatting.
+</p></div>
+
+
+<div class="required"><div id="Exercise-4" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 4.</span> (40 points)
+	 Implement a trie that uses fine-grained locking in <tt>fine-trie.c</tt>.
+	 In other words, every node in the trie should have its own lock (a mutex is fine).
+	 <br>
+	 What makes fine-grained locking tricky is ensuring that you cannot deadlock while acquiring locks, and that a thread doesn't hold unnecessary locks.  Be sure to document your locking protocol in your README.
+  <br>	
+  Be sure to include support for squatting in this trie as well (extend exercise 3 to the fine-grained trie).
+</p></div>
+
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (up to 5 points, depending on solution quality)
+	 The provided print function is a bit terse, and the user has to work to decode
+	 the tree structure.  Create a print function that clearly shows the levels of the tree
+	 and better conveys the visual intuition of how the tree is organized.
+</p></div>
+
+
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (up to 10 points, depending on how elegant and correct your solution is)
+	 Each level of the trie is organized as a singly-linked list, sorted by key.
+	 Within a level, we could search faster using a skiplist.  Read <a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/papers/skiplists.pdf">this article</a> (or search the web)
+	 to learn more about skip lists.
+	 <br>
+	 To complete this challenge, implement a skiplist to replace the current <tt>next</tt> pointer in each trie node.
+	 <br>
+	 Be careful to use the thread-safe pseudo-random number generator.
+</p></div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> (up to 40 points, depending on how elegant and correct your solution is)
+	 <b>Important.</b> This challenge is extremely hard, so do not start this before your lab is otherwise complete.
+	 Getting all 40 points will require substantial documentation demonstrating the correctness of your implementation.
+	 <br>
+	 <a href="http://www.rdrop.com/~paulmck/RCU/">Read-copy update</a> is an alternative to reader/writer locking
+	 that can be more efficient for read-mostly data structures.
+	 The key idea is that readers follow a carefully designed path through the data structure <b>without holding any locks</b>,
+	 and writers are careful about how they update the data structure.  Writers still use a lock to mutually exclude each other.
+	 Read enough from the link above, or other sources, to learn how RCU works.
+	 <br>
+	 Task: Create a trie variant (<tt>rcu-trie.c</tt>) which uses RCU instead of a reader-writer lock.  You may use 
+	 a 3rd party RCU implementation for the helper functions (e.g., <code>rcu_read_lock</code>, or write your own.  You should write the rcu-trie yourself.
+	 We highly recommend keeping this in a separate source file from your main assignment.
+	 <br>
+	 Note: RCU requires memory barriers in some cases, even for readers, so be sure you understand where these need to be placed.
+</p></div>
+
+<p>
+<b>This completes the lab.</b>
+Make sure you
+hand in your work with <kbd>make handin</kbd>.
+</p>
+
+<h3 id="Acknowledgements">Acknowledgements</h3>
+
+<p>Portions of the thread programming guidelines are adopted undergraduate OS course guidelines
+created by Mike Dahlin and Lorenzo Alvisi.</p>
+
+
+<hr>
+<p class="lastupdated">Last updated: Fri May 03 13:56:21 -0400 2013
+ [<a href="http://validator.w3.org/check?uri=referer">validate xhtml</a>]</p>
+
+
+</body></html>

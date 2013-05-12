@@ -1,0 +1,567 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0065)http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>CSE 306: Lab 4: Kernel Rootkit</title>
+<link rel="stylesheet" type="text/css" href="./CSE 306  Lab 4  Kernel Rootkit_files/style.css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript" src="./CSE 306  Lab 4  Kernel Rootkit_files/util.js">
+</script><style type="text/css"></style>
+</head>
+<body class=" hasGoogleVoiceExt"><div class="jump-hdr"><div class="jump-section">Sections ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#CSE-306--Lab-4--Kernel-Rootkit" style="padding-left: 0em; background-color: rgb(192, 192, 255); background-position: initial initial; background-repeat: initial initial;">CSE 306: Lab 4: Kernel Rootkit</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Introduction" style="padding-left: 1em;">Introduction</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Getting-Started" style="padding-left: 2em;">Getting Started</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Sharing-code-with-a-partner" style="padding-left: 2em;">Sharing code with a partner</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Hand-In-Procedure" style="padding-left: 2em;">Hand-In Procedure</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#For-Your-Safety" style="padding-left: 2em;">For Your Safety</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Rootkits" style="padding-left: 1em;">Rootkits</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Building-the-skeleton-code" style="padding-left: 2em;">Building the skeleton code</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Understanding-the-Skeleton-Code" style="padding-left: 2em;">Understanding the Skeleton Code</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Helpful-Resources" style="padding-left: 1em;">Helpful Resources</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Debugging-the-kernel" style="padding-left: 1em;">Debugging the kernel</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Installing-vmlinux" style="padding-left: 2em;">Installing vmlinux</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Attaching-to-the-running-kernel." style="padding-left: 2em;">Attaching to the running kernel.</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Running-your-kernel-in-a-system-emulator" style="padding-left: 2em;">Running your kernel in a system emulator</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Core-Assignment" style="padding-left: 1em;">Core Assignment</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Making-the-rootkit-persistent." style="padding-left: 2em;">Making the rootkit persistent.</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Hide-the-ssh-server" style="padding-left: 2em;">Hide the ssh server</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Hide-the-module-itself" style="padding-left: 2em;">Hide the module itself</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Hide-the-open-socket" style="padding-left: 2em;">Hide the open socket</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Hide-the-module-files" style="padding-left: 2em;">Hide the module files</a></div></div><div class="jump-section">Exercises ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Exercise-1">Exercise 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Exercise-2">Exercise 2</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Exercise-3">Exercise 3</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Exercise-4">Exercise 4</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/lab4.html#Exercise-5">Exercise 5</a></div></div><div class="jump-section">References ▿<div class="jump-drop"><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Lab tools guide</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/i386/toc.htm">80386 manual</a><div>IA32</div><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-1.pdf" style="padding-left: 1em;">Basic architecture</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2A.pdf" style="padding-left: 1em;">Instruction set A-M</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-2B.pdf" style="padding-left: 1em;">Instruction set N-Z</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3A.pdf" style="padding-left: 1em;">System programming 1</a><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/ref/ia32/IA32-3B.pdf" style="padding-left: 1em;">System programming 2</a></div></div></div>
+<h1 id="CSE-306--Lab-4--Kernel-Rootkit">CSE 306: Lab 4: Kernel Rootkit</h1>
+<div id="topnavbar">
+<ul class="topnavlist">
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/index.html">Home</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/syllabus.html">Schedule</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/policies.html">Syllabus</a></li>
+<!--<li><a href="tentativeschedule.html">Tentative schedule</a></li>-->
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/labs.html">Labs</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/tools.html">Tools</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/reference.html">Reference</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/announcements.html">Announcements</a></li>
+<li><a href="http://www.cs.stonybrook.edu/~porter/courses/cse306/s13/mailing.html">Mailing List</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="./CSE 306  Lab 4  Kernel Rootkit_files/labs.js"></script>
+
+<p>
+<b>Due on Friday, May 10, 2013, 11:59 PM<br>
+</b>
+Note: You may use your remaining late hours on this lab.
+</p>
+
+<h2 id="Introduction">Introduction</h2>
+
+<p>
+This lab will introduce you to Linux kernel programming and 
+OS security issues, by implmenting a simple rootkit.
+This lab is designed to be a bit more open-ended.
+</p>
+
+<p>The course staff have provided you with a simple kernel rootkit as a starting point.
+Your task will be to take several steps to hide the rootkit from 
+the administrator or user.
+</p>
+
+<h3 id="Getting-Started">Getting Started</h3>
+
+<p>
+We will provide you with some initial source code to start from.
+To fetch that source, use Git to commit your Lab 3 source,
+fetch the latest version of the course repository,
+and then
+create a local branch called <tt>lab4</tt> based on our lab4
+branch, <tt>origin/lab4</tt>:
+</p>
+<pre>kermit% <kbd>cd ~/CSE306/lab</kbd>
+kermit% <kbd>git commit -am 'my solution to lab3'</kbd>
+Created commit 254dac5: my solution to lab3
+ 3 files changed, 31 insertions(+), 6 deletions(-)
+kermit% <kbd>git pull</kbd>
+
+Already up-to-date.
+kermit% <kbd>git checkout -b lab4 origin/lab4</kbd>
+Branch lab4 set up to track remote branch refs/remotes/origin/lab4.
+Switched to a new branch "lab4"
+kermit% 
+</pre>
+
+
+<p>
+The <kbd>git checkout -b</kbd> command shown above actually does two
+things: it first creates a local branch <tt>lab4</tt> that is
+based on the <tt>origin/lab4</tt> branch provided by the course
+staff, and second, it changes the contents of your <tt>lab</tt>
+
+directory to reflect the files stored on the <tt>lab4</tt> branch.
+Git allows switching between existing branches using <kbd>git
+checkout <i>branch-name</i></kbd>, though you should commit any
+outstanding changes on one branch before switching to a different
+one.
+</p>
+
+<p>
+You will now need to merge the changes you made in your <tt>lab3</tt> 
+branch into the <tt>lab4</tt> branch, with the <kbd>git merge lab3</kbd> command.
+</p>
+
+<p>
+In some cases, Git may not be able to figure out how to merge your changes with
+the new lab assignment (e.g. if you modified some of the code that
+is changed in the third lab assignment).  In that case, the <kbd>git
+merge</kbd> command will tell you which files are <i>conflicted</i>,
+and you should first resolve the conflict (by editing the relevant files)
+and then commit the resulting files with <kbd>git commit -a</kbd>.
+</p>
+
+<p>
+Lab 4 contains the  new source files in the lab4 directory.
+</p>
+
+<h3 id="Sharing-code-with-a-partner">Sharing code with a partner</h3>
+
+<p><b>Important:</b> In this lab, you may work in teams of up to 4 students.
+We recommend creating larger teams so that you can help each other find your
+way around the OS kernel.  This lab is challenging, and you will benefit 
+from working on larger teams.</p>
+
+<p><b>Unless we hear otherwise from you, we will assume you are working with 
+the same partner as lab 3</b>.  You are welcome to change partners if you like;
+if you do, please email the course staff immediately to change permissions on your 
+repositories.</p>
+
+<p>We will set up group permission to one team member's git repository on scm.  
+Suppose Partner A is the one handing in the code.  Partner A should follow the instructions
+above to merge the lab4 code.  
+After Partner A has pushed this change to scm, 
+Partner B should simply clone Partner A's repository
+and use it.  For example:</p>
+
+<pre>kermit% <kbd>git clone ssh://PartnerB@scm.cs.stonybrook.edu:130/scm/cse306git-s13/hw-PartnerA lab4</kbd>
+</pre>
+
+<p>Note that it may take a few days about letting the course staff know your partner
+selection for the tech staff to apply these permission changes.
+Again, you are not required to use git to coordinate changes, only to hand in the assignment, 
+but we recommend you learn
+to use git.  You may use any means you like to share code with your partner.
+</p>
+
+
+<h3 id="Hand-In-Procedure">Hand-In Procedure</h3>
+
+<p>
+When you are ready to hand in your lab code and write-up,
+create a file called <tt>slack.txt</tt> noting how many
+late hours you have used both for this assignment and in
+total. (This is to help us agree on the number that you have used.)
+This file should contain a single line formatted as follows (where n is the number of late hours):
+</p>
+<pre>late hours taken: n</pre>
+<p>
+Then run <kbd>make handin</kbd> in the <tt>labs</tt> directory.
+<i>If you submit multiple times, we will take the latest
+submission and count late hours accordingly.</i></p>
+
+<p>In this and all other labs, you may complete challenge problems for extra credit.
+If you do this, please create a file called challenge.txt, which includes 
+a short (e.g., one or two paragraph) description of what you did
+to solve your chosen challenge problem and how to test it.
+If you implement more than one challenge problem,
+you must describe each one.
+</p>
+
+<p>This lab does not include any questions for you to answer,
+but you should document your design in the README file.</p>
+
+<h3 id="For-Your-Safety">For Your Safety</h3>
+
+<p><b>Modifying the OS kernel on your system can lose all data on the system!</b>
+If you introduce a null pointer in a regular program, it crashes and loses all of its data;
+the same is true of an OS kernel.  If you introduce a bug in the OS, it will crash.
+When an OS crashes, it can corrupt the file system and lose all of your data 
+(but we hope it won't).  Thus, it is essential that you do two things to 
+protect yourself.</p>
+
+<p><b>Snapshot your VM before you start.</b>
+This can be done through the vSphere client---there is a button to 
+take a snapshot and roll back a snapshot of the VM.
+Note that this will not save your changes, but will allow you to recreate
+a corrupted VM on your own (rather than waiting for the system administrator 
+do to this).</p>
+
+<p><b>Push your code to another machine before testing.</b>
+Before you install and test kernel code, be sure to use git to commit and push
+your code to another machine (e.g., scm).  That way, if the file system is corrupted,
+you don't lose your work.  If you don't want to inflict untested code on your teammates,
+create a branch in git.
+</p>
+
+<h2 id="Rootkits">Rootkits</h2>
+
+<p>A kernel rootkit is a particular type of malware that hides its presence from the 
+user and system administrator, by modifying the OS kernel.
+A rootkit generally conceals another type of malware, such as a "back door" 
+that allows an attacker to come back to the system later.
+</p>
+
+<p>For example, if an attacker breaks into a system once, 
+the attacker may set up an ssh service that accepts an attacker-provided key, 
+running as root and listening on
+an unusual port, that 
+expects a different password than the system administrator knows about.
+</p>
+
+<p>
+The problem is that, if the administrator does a <kbd>ps</kbd> and sees
+that an unexpected ssh daemon is running, this alerts the administrator
+that something is wrong.
+Thus, the attacker will also install a rootkit, which hides the presence of the 
+ssh daemon.</p>
+
+<p>A rootkit is a kernel module---a library dynamically loaded into the kernel.
+Modules are a common kernel facility for writing device drivers and other kernel extensions.
+Modules run as part of the OS kernel and have unfettered access to any OS kernel
+data structure or device---a module is trusted to behave itself.
+Unlike an application, which is in a protected address space, a buggy or malicious kernel module
+can corrupt the system arbitrarily.
+</p>
+
+<p>Rootkits make small changes to OS kernel data structures to 
+hide the presence of malicious code.  In our ssh example, 
+a rootkit might hide the ssh process in the output of the <kbd>ps</kbd>
+command.  A rootkit might also hide its binary in the file system,
+the open socket from <kbd>netstat</kbd>, or even hide its CPU usage.
+</p>
+
+<p>Note that rootkits are generally used after an initial attack.
+In other words, if an attacker compromises a web server or other application
+with an external network connection, the attacker installs a rootkit 
+to make it easier to come back later.
+Rather than re-attack the initial entry point, which could be patched later,
+the attacker simply uses a secret service to log in.</p>
+
+<p>In this lab, you will learn your way around the Linux kernel by making
+a few small, but tricky changes to hide such a ssh service.</p>
+
+<h3 id="Building-the-skeleton-code">Building the skeleton code</h3>
+
+<p>
+In the lab4 directory, type <kbd>make</kbd> to build the <tt>rootkit.ko</tt>
+kernel module.  You can load the kernel module by typing <kbd>sudo insmod ./rootkit.ko</kbd>;
+the module can be unloaded by typing <kbd>sudo rmmod rootkit</kbd>.
+You can view all loaded modules by reading the output of the <kbd>lsmod</kbd> command.
+You can confirm that the rootkit was loaded by checking the output of <kbd>dmesg</kbd>:
+</p>
+<pre>[   20.467846] init: plymouth-upstart-bridge main process (821) killed by TERM signal
+[  162.349918] init: tty1 main process ended, respawning
+[  225.170703] init: tty1 main process ended, respawning
+[  279.530944] init: tty1 main process ended, respawning
+[ 5822.247860] resolved symbol tlb_gather_mmu c1114e20
+[ 5822.253745] Rootkit: Hello, world
+</pre>
+
+<p>Our rootkit will also set up an ssh daemon which listens on port 19999.  Note: an external 
+firewall blocks this port, so ssh-ing to this port from outside another VM will not work.
+</p>
+
+<p>To set up the "secret" ssh, first generate a set of ssh keys you want to use.
+This can be done by typing <kbd>ssh-keygen -t rsa</kbd>.  This will create two files in your
+<tt>.ssh</tt> directory: <tt>id_rsa</tt> (your private key) and 
+<tt>id_rsa.pub</tt> (your public key).  
+Issue the following commands:</p>
+
+<pre>cse306@vl170:~$ sudo mkdir /fake.ssh
+cse306@vl170:~$ sudo cp .ssh/id_rsa.pub /fake.ssh/authorized_keys
+cse306@vl170:~$ sudo chown -R root.root /fake.ssh
+cse306@vl170:~$ sudo chmod 700 /fake.ssh
+</pre>
+
+<p>This will set up a fake directory for authorized keys.
+The directory must be owned by root with permissions 700.
+Once this is all set up, launch the ssh daemon
+by running <kbd>sudo ./start-daemon.sh</kbd>.
+You should see this daemon running in <kbd>ps</kbd>,
+and you can test it using this command:</p>
+
+<pre>cse306@vl170:~$ ssh -p 19999 root@localhost 
+</pre>
+
+<p>This command should drop you to a root shell on the local machine,
+without asking for a password.
+</p>
+
+<h3 id="Understanding-the-Skeleton-Code">Understanding the Skeleton Code</h3>
+
+<p>All kernel modules provide an init and exit method, which are called when the module
+is loaded and unloaded, respectively.  This is currently all the rootkit includes; 
+many modules will create devices or register other callbacks.
+</p>
+
+<p>The rootkit also provides examples of how to find kernel functions.
+Some functions are exported explicitly as symbols: a module can simply call these.
+</p>
+
+<p>
+In other cases, functions are only meant to be called within the kernel.
+In these situations, we use <tt>kallsyms_lookup_name</tt> to find the address of the function,
+and cast it to the appropriate symbol.  For instance, the provided code
+has an example of how to find the <tt>unmap_page_range</tt>, kernel-private function.
+</p>
+
+<p><b>Note:</b> You probably will not need the particular functions we provide---don't feel
+like you are doing anything wrong if you don't use them.  These are provided only as examples
+of how to find functions you may need.</p>
+
+<h2 id="Helpful-Resources">Helpful Resources</h2>
+
+<p>The best resource to finding kernel function is the Linux Cross-Reference (LXR), 
+located at <a href="http://lxr.linux.no/">http://lxr.linux.no/</a>.
+This site includes a number of useful features that can help you 
+find your way through the source code.</p>
+
+<p>These books (available through the campus Safari Online subscription), also
+are a helpful reference in understanding Linux kernel code:</p>
+<ul>
+<li>  <p>Daniel P. Bovet &amp; Marco Cesati<br>
+	  <em><a href="https://libproxy.cc.stonybrook.edu/login?url=http://proquest.safaribooksonline.com/0596005652">Understanding the Linux Kernel (3rd edition)</a></em><br>
+	  O'Reilly &amp; Associates, Novemeber 2005.<br>
+	  ISBN: 0596005652
+	</p>
+</li>
+<li> <p>Jonathan Corbet; Alessandro Rubini; Greg Kroah-Hartman<br>
+     <em><a href="https://libproxy.cc.stonybrook.edu/login?url=http://proquest.safaribooksonline.com/0596005903">Linux Device Drivers (3rd edition)</a></em><br>
+     	  O'Reilly &amp; Associates, February 2005.<br>
+	  ISBN-13: 978-0-596-00590-0
+	  <br>
+     </p>
+  </li>
+</ul>
+
+<h2 id="Debugging-the-kernel">Debugging the kernel</h2>
+
+<p>Attaching a debugger to a running kernel is tricky, especially if you try to run the debugger on the same machine!
+But it is possible.  We will give you a few tips that can help you when printk and intuition aren't enough.</p>
+
+<h3 id="Installing-vmlinux">Installing vmlinux</h3>
+
+<p>The first thing you will need is an uncompressed vmlinux file (your VM is actually booting a vmlinuz file, which is 
+a compressed kernel image).  Issue the following commands to get an uncompressed kernel image with debugging symbols:</p>
+
+<pre>echo "deb http://ddebs.ubuntu.com $(lsb_release -cs) main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/ddebs.list
+
+echo "deb http://ddebs.ubuntu.com $(lsb_release -cs)-updates main restricted universe multiverse
+deb http://ddebs.ubuntu.com $(lsb_release -cs)-security main restricted universe multiverse
+deb http://ddebs.ubuntu.com $(lsb_release -cs)-proposed main restricted universe multiverse" | 
+sudo tee -a /etc/apt/sources.list.d/ddebs.list
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 428D7C01
+
+sudo apt-get update
+
+sudo apt-get install linux-image-`uname -r`-dbgsym
+</pre>
+
+<p>Once this is finished, you should see a file in /usr/lib/debug/boot such as vmlinux-3.2.0-40-generic-pae, in addition to the similarly named vmlinuz files.</p>
+
+<p>Note, you may also need to install gdb if you haven't already:</p>
+
+<pre>sudo apt-get install gdb
+</pre>
+
+<h3 id="Attaching-to-the-running-kernel.">Attaching to the running kernel.</h3>
+
+<p>You can inspect variable values on your running kernel using the command below (substituting the version of the running kernel as appropriate).  However, this approach  will not let you set breakpoints, only inspect values)</p>
+
+<pre>sudo gdb /usr/lib/debug/boot/vmlinux-3.2.0-38-generic-pae /proc/kcore
+</pre>
+
+<p>You can learn more about this techique and how to include modules <a href="http://www.makelinux.net/ldd3/chp-4-sect-6">here</a>.</p>
+
+<h3 id="Running-your-kernel-in-a-system-emulator">Running your kernel in a system emulator</h3>
+
+<p>
+You can also run your kernel/rootkit inside of qemu (or another emulator), and attach gdb to the emulator.
+Qemu emulates x86 hardware, and can run a complete OS kernel.  Qemu can also export the gdb protocol over a network socket,
+allowing more access to the running kernel.</p>
+
+<p>
+Download a disk image <a href="http://www.cs.stonybrook.edu/~porter/disk.img">here</a>, which is a file that qemu will treat like a disk.  The disk image contains 
+a simple Ubuntu file system (very similar to your VM in many respects).
+You can mount the disk image and add files to it using commands as below:
+</p>
+
+<pre>
+sudo apt-get install qemu
+
+sudo mkdir /mnt/rootfs
+
+sudo mount -o loop disk.img /mnt/rootfs
+
+mkinitramfs -o initrd.img-`uname -r` `uname -r`
+
+sudo cp initrd.img-`uname -r` /mnt/rootfs/boot
+
+sudo umount /mnt/rootfs/
+
+
+</pre>
+
+<p>You may also need to install qemu on your machine: </p>
+
+<pre>sudo apt-get install qemu qemu-user qemu-system 
+</pre>
+
+<p>To set up qemu, type this</p>
+<pre>sudo cp /boot/vmlinuz-`uname -r` vmlinuz
+sudo chmod 777 vmlinuz
+</pre>
+
+<p>To run qemu, type this</p>
+
+<pre>qemu-system-i386 -hda disk.img -cpu pentium3  -kernel vmlinuz  -append "root=\"/dev/sda\" init=\"/boot/initrd\" rw" -s -S -no-kvm
+</pre>
+
+<p>At this point, a window should pop up.  If a window cannot, or you get X errors, log into your VM again, being sure to provide the '-X' option to ssh.  
+</p>
+
+<p>The window will say that qemu is stopped.  It is waiting for gdb to attach to it and continue.  Start gdb in another window as below:</p>
+
+<pre>cse306@vl170:~$ gdb /usr/lib/debug/boot/vmlinux-`uname -r`
+GNU gdb (Ubuntu/Linaro 7.4-2012.04-0ubuntu2.1) 7.4-2012.04
+Copyright (C) 2012 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http: gnu.org="" licenses="" gpl.html="">
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "i686-linux-gnu".
+For bug reporting instructions, please see:
+<http: bugs.launchpad.net="" gdb-linaro="">...
+Reading symbols from /usr/lib/debug/boot/vmlinux-3.2.0-38-generic-pae...done.
+(gdb) target remote localhost:1234
+Remote debugging using localhost:1234
+0x0000fff0 in ?? ()
+(gdb) 
+</http:></http:></pre>
+
+<p>From here, you should be able to set breakpoints, inspect memory, break execution, etc.  You can type <kbd>c</kbd> to continue execution.</p>
+
+<h2 id="Core-Assignment">Core Assignment</h2>
+<h3 id="Making-the-rootkit-persistent.">Making the rootkit persistent.</h3>
+
+<p>
+If you just install the rootkit by hand, it will not be reloaded after
+the system reboots.  Thus, a sensible first step is to create and install
+an <tt>init</tt> script, which is run during boot, to relaunch the rootkit.
+</p>
+
+<p>There are a number of helpful references on the internet about how to write an
+init script, including <a href="https://www.linux.com/learn/tutorials/442412-managing-linux-daemons-with-init-scripts">this one</a>, or
+yoou can "pattern match" the existing ssh init script.</p>
+
+<div class="required"><div id="Exercise-1" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 1.</span> (10 points)
+	 Create an <tt>init</tt> script in <tt>/etc/init.d</tt> and appropriate <tt>/etc/rc*.d</tt>
+	 directories that launches your rootkit upon reboot.  
+	 <br>
+	 Be sure to test that the daemon and kernel module are loaded after rebooting your VM (using <kbd>sudo shudown -r now</kbd>.
+	 <br>
+	 Turn in a copy of your init script in the file <tt>rootkit-init</tt>.
+</p></div>
+
+<h3 id="Hide-the-ssh-server">Hide the ssh server</h3>
+
+<p>The next step is to take 
+our "extra" ssh process out of the output of 
+the <kbd>ps</kbd> command, so an administrator wouldn't notice this 
+is running.
+</p>
+
+<p><b>Note:</b> For the remaining exercises, feel free to be creative and implement
+each task how you think best.  
+The handout will have suggestions, but there may be multiple approaches that will work.
+Be sure to document your approach in the <tt>README</tt> file.
+</p>
+
+<p>One approach is to remove the process's directory from the <kbd>/proc</kbd>
+directory, or hide it when a process calls <tt>readdir</tt> or <tt>getdents</tt>
+on the <tt>/proc</tt> directory.  You can find code for the proc file system in
+the <tt>fs/proc</tt> directory of the kernel source.
+</p>
+
+<p><b>Note:</b> Avoid making overly disruptive changes,
+as you want the process to continue running properly.  
+</p>
+
+<p><b>Hint:</b> You may benefit from starting with the <kbd>strace</kbd> tool,
+which dumps the list of all system calls issued by a command.   For instance, you can type <kbd>strace ps -eaf</kbd> and it will dump a lot
+of output to the console listing all sysetm calls and arguments.  This can give you a fair bit of insight 
+into how these utilities work.  From there, you might have some better intuitions about
+which system call or to focus on adding a filter to.
+</p>
+
+<p><b>Hint:</b> You may find it helpful to pass things like the process ID to hide
+as a module parameter.  You can learn more about module parameters in <a href="http://www.tldp.org/LDP/lkmpg/2.6/html/lkmpg.html">The Linux Kernel Module Programming Guide</a>, specifically Section 2.6.
+</p>
+
+<div class="required"><div id="Exercise-2" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 2.</span> (25 points)
+	 Hide the ssh process from the output of <kbd>ps -eaf</kbd>.
+	 <br>
+	 Be sure to double check that it is really running
+	 by ssh-ing to it.
+</p></div>
+
+<h3 id="Hide-the-module-itself">Hide the module itself</h3>
+
+<p>If you want to hide your rootkit, the next task is to prevent the 
+administrator from seeing strange entries in <kbd>lsmod</kbd>.</p>
+
+<p><b>Hint:</b> A simple approach might filter the output of <tt>/proc/modules</tt>.
+</p>
+
+<div class="required"><div id="Exercise-3" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 3.</span> (25 points)
+	 Hide the rootkit module from the output of <kbd>lsmod</kbd>.
+	 <br>
+	 At this point, you may want to also remove any "hello world" 
+	 debug messages.
+</p></div>
+
+<h3 id="Hide-the-open-socket">Hide the open socket</h3>
+
+<p>The <kbd>sudo netstat -nap</kbd> command shows the administrator all open sockets on the system.
+The administrator shouldn't be able to see that there is something listening on port 19999 (although
+she may find it if she randomly tried to ssh to this port).
+Again, this list is exported through various files in the <tt>/proc/net</tt> directory.
+</p>
+
+<div class="required"><div id="Exercise-4" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 4.</span> (20 points)
+	 Hide the open socket on port 19999 from the output of <kbd>sudo netstat -nap</kbd>.
+</p></div>
+
+<h3 id="Hide-the-module-files">Hide the module files</h3>
+
+<p>Of course, the final task is to hide all of the relevant module files.
+We don't want the administrator finding the <tt>rootkit.ko</tt> file,
+the alternate ssh config, or the bogus <tt>authorized_keys</tt> files lying around.
+So create a file system filter that hides them.</p>
+
+<p><b>Hint: </b> Each file's inode object points to a set of routines, defined
+in <tt>include/linux/fs.h</tt> (see the <tt>file_operations</tt> structure).
+This includes a <tt>readdir</tt> operation.
+One approach is to look up the parent directory's <tt>inode</tt>
+using <tt>filename_lookup</tt>, and redirect it to your own
+<tt>file_operations</tt>, which filters out names you don't want others to see.
+</p>
+
+
+<div class="required"><div id="Exercise-5" style="position: relative; top: -5em;"></div>
+<p><span class="header">Exercise 5.</span> (20 points)
+	 Hide all rootkit-related files after the rootkit is loaded.
+	 Commands including <kbd>ls</kbd> should not report that the file exists.
+	 <br>
+	 It is ok if an attempt to create a file with the same name fails.
+</p></div>
+
+<div class="challenge">
+<p><span class="header">Challenge!</span> 
+	 Think of other ways an administrator might notice the presence of your rootkit,
+	 and mask these.  Be sure to report any tricks you use in challenge.txt.
+</p></div>
+
+<p>
+<b>This completes the lab.</b>
+Make sure you 
+hand in your work with <kbd>make handin</kbd>.
+</p>
+
+
+<hr>
+<p class="lastupdated">Last updated: Sat May 11 16:44:57 -0400 2013
+ [<a href="http://validator.w3.org/check?uri=referer">validate xhtml</a>]</p>
+
+
+</body></html>
